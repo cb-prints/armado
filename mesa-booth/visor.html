@@ -122,6 +122,25 @@ function loop(ts){const dt=Math.min(0.05,(ts-last)/1000);last=ts;
   ctl.update();renderer.render(scene,cam);window.__ready=true;requestAnimationFrame(loop);}
 requestAnimationFrame(loop);
 </script>
-<script>(function(){if(new URLSearchParams(location.search).get('auto')==='0')return;addEventListener('load',function(){setTimeout(function(){var b=document.getElementById('play')||document.getElementById('bPlay')||document.getElementById('aPlay');if(b)b.click();},1200);});})();</script>
+<script>(function(){
+var q=new URLSearchParams(location.search),L=q.get('lang')||(/^es/i.test(navigator.language||'')?'es':'en'),D={"Armado": "Assembly", "Armado.": "Assembly.", "{n}/{n}": "{n}/{n}", "Frente": "Front", "Lateral": "Side", "Atrás": "Back", "Atras": "Back", "Arriba": "Top", "Armar ▶": "Assemble ▶", "Pausa ❚❚": "Pause ❚❚", "Explosionada": "Exploded", "Cotas": "Dimensions", "Equipo": "Equipment", "{n}.": "{n}.", "Tomar imagen": "Save image", "● Grabar video": "● Record video", "Guardar la vista actual como PNG": "Save the current view as PNG", "Graba la animación de armado completa desde la vista actual": "Records the full assembly animation from the current view", "Graba la animacion de armado completa desde la vista actual": "Records the full assembly animation from the current view", "{n}x": "{n}x", "Vista explosionada": "Exploded view", "Mesa booth desarmable": "Knock-down booth table", "{n} x {n} x {n} in (ancho x fondo x alto) · honeycomb {n} mm · {n} piezas · {n} hoja {n} x {n} in · sin pegamento": "{n} x {n} x {n} in (width x depth x height) · honeycomb {n} mm · {n} pieces · {n} sheet {n} x {n} in · no glue", "Armada": "Assembled", "· {n} x {n} x {n} in · {n} piezas, sin pegamento. Las lengüetas quedan al ras de la cubierta.": "· {n} x {n} x {n} in · {n} pieces, no glue. The tabs sit flush with the top.", "Abajo": "Bottom", "Mesa booth {n}D": "Booth table {n}D", "Cubierta (T{n}) boca abajo sobre el piso limpio, cara impresa hacia abajo.": "Top (T{n}) upside down on a clean floor, printed face down.", "Viga central (P{n}) con las muescas hacia arriba: sus {n} lengüetas entran en las ranuras del centro de la cubierta.": "Center beam (P{n}) with the notches up: its {n} tabs go into the slots in the center of the top.", "Primera pata (P{n}), muesca hacia abajo: baja sobre la muesca de la viga y sus {n} lengüetas entran en la cubierta.": "First leg (P{n}), notch down: lower it onto the beam notch so its {n} tabs go into the top.", "Segunda pata (P{n}), igual en el otro extremo.": "Second leg (P{n}), same at the other end.", "Dar vuelta la mesa (mejor entre {n} personas) y apoyarla sobre las patas.": "Flip the table over (best with {n} people) and stand it on its legs."},SRC="es";
+var T=(L!==SRC&&D)?D:null,NUM=/\d+(?:[.,]\d+)?/g;
+function tr(t){var k=t.replace(/\s+/g,' ').trim();if(!k)return null;var nums=k.match(NUM)||[];var v=T[k.replace(NUM,'{n}')];if(v==null)return null;var i=0;
+ v=v.replace(/\{n\}/g,function(){return nums[i++]||''});var lead=t.match(/^\s*/)[0],tail=t.match(/\s*$/)[0];return lead+v+tail;}
+function walk(root){if(!T)return;var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,ns=[];while(n=w.nextNode())ns.push(n);
+ ns.forEach(function(n){var pe=n.parentElement;if(!pe||/SCRIPT|STYLE/.test(pe.tagName))return;var v=tr(n.nodeValue);if(v!=null&&v!==n.nodeValue)n.nodeValue=v});
+ if(root.querySelectorAll)root.querySelectorAll('[title],[aria-label]').forEach(function(e){['title','aria-label'].forEach(function(a){var x=e.getAttribute(a);if(x){var v=tr(x);if(v!=null&&v!==x)e.setAttribute(a,v)}})});}
+if(T){document.documentElement.lang=L;var run=function(){walk(document.body);new MutationObserver(function(ms){ms.forEach(function(m){if(m.type==='characterData'){var v=tr(m.target.nodeValue);if(v!=null&&v!==m.target.nodeValue)m.target.nodeValue=v}else m.addedNodes.forEach(function(x){if(x.nodeType===3){var v=tr(x.nodeValue);if(v!=null&&v!==x.nodeValue)x.nodeValue=v}else if(x.nodeType===1)walk(x)})})}).observe(document.body,{childList:true,subtree:true,characterData:true})};
+ if(document.body)run();else document.addEventListener('DOMContentLoaded',run);}
+addEventListener('load',function(){
+ var cs=[].slice.call(document.querySelectorAll('canvas')),cv=cs.sort(function(a,b){return b.clientWidth*b.clientHeight-a.clientWidth*a.clientHeight})[0];
+ if(cv&&q.get('marca')!=='0'){var wm=document.createElement('div'),inner=document.createElement('div'),dark=matchMedia('(prefers-color-scheme: dark)').matches;
+  wm.style.cssText='position:fixed;pointer-events:none;overflow:hidden;z-index:1;opacity:'+(dark?0.07:0.07);
+  inner.style.cssText='position:absolute;left:-50%;top:-50%;width:200%;height:200%;transform:rotate(-18deg);background:url(../'+(dark?'marca_agua_clara.png':'marca_agua.png')+') repeat;background-size:220px auto';
+  wm.appendChild(inner);document.body.appendChild(wm);
+  var fit=function(){var r=cv.getBoundingClientRect();wm.style.left=r.left+'px';wm.style.top=r.top+'px';wm.style.width=r.width+'px';wm.style.height=r.height+'px'};
+  fit();addEventListener('resize',fit);addEventListener('scroll',fit,true);setInterval(fit,1000);}
+ if(q.get('auto')!=='0')setTimeout(function(){var b=document.getElementById('play')||document.getElementById('bPlay')||document.getElementById('aPlay');if(b)b.click();},1200);});
+})();</script>
 </body>
 </html>

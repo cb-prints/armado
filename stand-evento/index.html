@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Armado Stand para evento</title><meta name="description" content="Animacion 3D del armado de Stand para evento, paso a paso.">
+<title>Armado · Assembly Stand para evento</title><meta name="description" content="Animacion 3D del armado de Stand para evento / 3D assembly animation.">
 <style>:root{--bg:#f4f5f7;--panel:#ffffff;--ink:#16191d;--muted:#5d6670;--line:#dde1e5;--brand:#c8102e;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--brand:#ff5a6e;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--brand:#ff5a6e;color-scheme:dark}
@@ -8,7 +8,21 @@
 header{display:flex;align-items:center;gap:14px;padding:8px 16px;background:#ffffff;color:#16191d;border-bottom:3px solid #23392f}
 .logo{height:40px;width:auto;flex:none}
 @media (max-width:560px){header{flex-direction:column;align-items:flex-start;gap:4px}.logo{height:34px}}
-.tit{min-width:0}.tit h1{font-size:16px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tit p{margin:0;font-size:12px;color:#5d6670}
-body{display:flex;flex-direction:column}iframe{flex:1;width:100%;border:0;display:block}</style></head>
-<body><header><img class="logo" src="../logo.png" alt="CB PRINTS · Displays and boxes"><div class="tit"><h1>Stand para evento</h1><p>Instrucciones de armado paso a paso</p></div></header>
-<iframe src="visor.html" title="Animación 3D del armado" allow="fullscreen"></iframe></body></html>
+.tit{min-width:0}.tit h1{font-size:16px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tit p{margin:0;font-size:12px;color:#5d6670}.mob{display:none;margin-left:auto}.desk{margin-left:auto}
+@media (max-width:560px){.mob{display:block}.desk{display:none}}
+.lang{margin-left:auto;display:flex;border:1px solid #23392f;border-radius:6px;overflow:hidden;flex:none}
+.lang button{font:600 13px system-ui,sans-serif;padding:6px 10px;border:0;background:#fff;color:#23392f;cursor:pointer}
+.lang button[aria-pressed=true]{background:#23392f;color:#fff}
+@media (max-width:560px){.top{display:flex;width:100%;align-items:center}}
+body{display:flex;flex-direction:column}iframe{flex:1;width:100%;border:0;display:block}</style><script>
+var LANG=(function(){var q=new URLSearchParams(location.search).get('lang');if(q==='es'||q==='en')return q;
+try{var m=localStorage.getItem('cb_lang');if(m==='es'||m==='en')return m}catch(e){}
+return /^es/i.test(navigator.language||'')?'es':'en'})();
+function setLang(l){LANG=l;try{localStorage.setItem('cb_lang',l)}catch(e){}document.documentElement.lang=l;
+document.querySelectorAll('[data-es]').forEach(function(e){e.textContent=e.getAttribute('data-'+l)});
+document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.l===l)});
+var f=document.querySelector('iframe');if(f)f.src='visor.html?lang='+l;}
+document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){if(b.dataset.l!==LANG)setLang(b.dataset.l)}});setLang(LANG)});
+</script></head>
+<body><header><div class="top"><img class="logo" src="../logo.png" alt="CB PRINTS · Displays and boxes"><span class="mob"><div class="lang" role="group" aria-label="Idioma / Language"><button data-l="es">ES</button><button data-l="en">EN</button></div></span></div><div class="tit"><h1 data-es="Stand para evento" data-en="Stand para evento">Stand para evento</h1><p data-es="Instrucciones de armado paso a paso" data-en="Step-by-step assembly instructions">Instrucciones de armado paso a paso</p></div><span class="desk"><div class="lang" role="group" aria-label="Idioma / Language"><button data-l="es">ES</button><button data-l="en">EN</button></div></span></header>
+<iframe title="3D" allow="fullscreen"></iframe></body></html>
