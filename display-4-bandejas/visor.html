@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Display 4 bandejas</title>
+<style>
+:root{--bg:#eef0f2;--panel:#ffffff;--ink:#1d2329;--muted:#5d6670;--line:#d5d9de;--accent:#1f3a5f;--accent2:#0e8f8a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--accent:#8fb8ff;--accent2:#2fc4bd;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--accent:#8fb8ff;--accent2:#2fc4bd;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+#app{display:flex;flex-direction:column;height:100%}
+header{padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:16px;margin:0}
+header .dim{color:var(--muted)}
+#stage{flex:1;position:relative;min-height:320px}
+#stage canvas{display:block;width:100%;height:100%}
+#caption{position:absolute;left:16px;right:16px;bottom:12px;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+#caption b{color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line);align-items:center}
+button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+input[type=range]{flex:1;min-width:140px}
+.sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+#rec.on{background:#c62828;border-color:#c62828;color:#fff}
+#msg{color:var(--muted);font-size:12px}
+body.shot header,body.shot .bar,body.shot #caption{display:none}
+body.shot.cap #caption{display:block;font-size:20px;bottom:18px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div id="app">
+<header><h1>Floor display 4 bandejas · armado fácil</h1><span class="dim" id="dims"></span></header>
+<div id="stage"><div id="caption"></div></div>
+<div class="bar">
+  <button data-v="persp" class="on">3/4</button><button data-v="front">Frente</button><button data-v="side">Lateral</button><button data-v="back">Atrás</button><button data-v="top">Arriba</button><button data-v="hook">Gancho</button>
+  <span class="sep"></span>
+  <button id="play">Armar ▶</button><input id="t" type="range" min="0" max="7" step="0.01" value="7">
+  <button id="exp">Explosionada</button><button id="cot" class="on">Cotas</button>
+  <span class="sep"></span>
+  <button id="snap" title="Guardar la vista actual como PNG">Tomar imagen</button><button id="rec" title="Graba la animación de armado completa desde la vista actual">● Grabar video</button><span id="msg"></span>
+</div>
+</div>
+<script>
+const DATA={"P": {"SHW": 83.0, "SHH": 50.0, "MRG": 0.4, "GAP": 0.4, "T": 0.1969, "SW": 0.2284, "CL": 0.04, "W": 24.0, "D": 18.0, "H": 60.0, "HB": 48.0, "LEVELS": [10.0, 19.5, 29.0, 38.5], "G": 0.5, "XS": 11.9016, "XLM": 11.2047, "XLI": 11.1062, "ZB": -8.9016, "ZBI": -8.8031, "ZF": 8.9016, "DS": 17.8032, "BR": 0.6969, "LN": 10.5, "BW": 23.8032, "FB": 11.0662, "EDGE_HOOK": 1.25, "ZL": 7.6516, "LH": 3.5, "LIP_R": 0.5, "LIP_DIP": 0.75, "DD": 16.4147, "TR": 0.75, "NH": 1.5, "NL": 0.2769, "TPR": 0.32, "HKL": 0.5969, "HOOK_LIP": 2.0, "STW": 2.5, "STL": 0.3869, "ST_POS": [3.0, 7.0], "RTW": 3.0, "RTL": 0.4869, "RT_X": [-6.0, 6.0], "SLOT_H": 0.9784, "HZ": 9.8031, "HOOK_Z": [2.5, 7.0], "HD_W": 24.0, "HD_H": 16.0, "HD_INS": 4.0, "HD_R": 2.5, "ZH": -7.5, "HD_Y0": 44.0, "F1": 10.5, "F2": 11.1969, "F3": 29.0001, "F4": 52.8033, "F5": 70.6065, "F6": 71.3034, "UE": 81.8034, "U1": 29.0001, "U2": 52.8033, "PCS": [{"code": "P01", "name": "Cuerpo", "qty": 1, "cut": [[[0, 0], [81.8034, 0], [81.8034, 48.0], [54.3191, 48.0], [54.3191, 44.0], [54.0907, 44.0], [54.0907, 48.0], [27.7127, 48.0], [27.7127, 44.0], [27.4843, 44.0], [27.4843, 48.0], [0, 48.0]], [[9.1358, 11.21], [9.3642, 11.21], [9.3642, 13.54], [9.1358, 13.54]], [[4.97, 9.8031], [7.53, 9.8031], [7.53, 10.7815], [4.97, 10.7815]], [[0.97, 9.8031], [3.53, 9.8031], [3.53, 10.7815], [0.97, 10.7815]], [[72.4392, 11.21], [72.6676, 11.21], [72.6676, 13.54], [72.4392, 13.54]], [[74.2734, 9.8031], [76.8334, 9.8031], [76.8334, 10.7815], [74.2734, 10.7815]], [[78.2734, 9.8031], [80.8334, 9.8031], [80.8334, 10.7815], [78.2734, 10.7815]], [[45.3717, 9.8031], [48.4317, 9.8031], [48.4317, 10.7815], [45.3717, 10.7815]], [[33.3717, 9.8031], [36.4317, 9.8031], [36.4317, 10.7815], [33.3717, 10.7815]], [[9.1358, 20.71], [9.3642, 20.71], [9.3642, 23.04], [9.1358, 23.04]], [[4.97, 19.3031], [7.53, 19.3031], [7.53, 20.2815], [4.97, 20.2815]], [[0.97, 19.3031], [3.53, 19.3031], [3.53, 20.2815], [0.97, 20.2815]], [[72.4392, 20.71], [72.6676, 20.71], [72.6676, 23.04], [72.4392, 23.04]], [[74.2734, 19.3031], [76.8334, 19.3031], [76.8334, 20.2815], [74.2734, 20.2815]], [[78.2734, 19.3031], [80.8334, 19.3031], [80.8334, 20.2815], [78.2734, 20.2815]], [[45.3717, 19.3031], [48.4317, 19.3031], [48.4317, 20.2815], [45.3717, 20.2815]], [[33.3717, 19.3031], [36.4317, 19.3031], [36.4317, 20.2815], [33.3717, 20.2815]], [[9.1358, 30.21], [9.3642, 30.21], [9.3642, 32.54], [9.1358, 32.54]], [[4.97, 28.8031], [7.53, 28.8031], [7.53, 29.7815], [4.97, 29.7815]], [[0.97, 28.8031], [3.53, 28.8031], [3.53, 29.7815], [0.97, 29.7815]], [[72.4392, 30.21], [72.6676, 30.21], [72.6676, 32.54], [72.4392, 32.54]], [[74.2734, 28.8031], [76.8334, 28.8031], [76.8334, 29.7815], [74.2734, 29.7815]], [[78.2734, 28.8031], [80.8334, 28.8031], [80.8334, 29.7815], [78.2734, 29.7815]], [[45.3717, 28.8031], [48.4317, 28.8031], [48.4317, 29.7815], [45.3717, 29.7815]], [[33.3717, 28.8031], [36.4317, 28.8031], [36.4317, 29.7815], [33.3717, 29.7815]], [[9.1358, 39.71], [9.3642, 39.71], [9.3642, 42.04], [9.1358, 42.04]], [[4.97, 38.3031], [7.53, 38.3031], [7.53, 39.2815], [4.97, 39.2815]], [[0.97, 38.3031], [3.53, 38.3031], [3.53, 39.2815], [0.97, 39.2815]], [[72.4392, 39.71], [72.6676, 39.71], [72.6676, 42.04], [72.4392, 42.04]], [[74.2734, 38.3031], [76.8334, 38.3031], [76.8334, 39.2815], [74.2734, 39.2815]], [[78.2734, 38.3031], [80.8334, 38.3031], [80.8334, 39.2815], [78.2734, 39.2815]], [[45.3717, 38.3031], [48.4317, 38.3031], [48.4317, 39.2815], [45.3717, 39.2815]], [[33.3717, 38.3031], [36.4317, 38.3031], [36.4317, 39.2815], [33.3717, 39.2815]], [[9.1358, 1.71], [9.3642, 1.71], [9.3642, 4.04], [9.1358, 4.04]], [[72.4392, 1.71], [72.6676, 1.71], [72.6676, 4.04], [72.4392, 4.04]], [[9.1358, 6.21], [9.3642, 6.21], [9.3642, 8.54], [9.1358, 8.54]], [[72.4392, 6.21], [72.6676, 6.21], [72.6676, 8.54], [72.4392, 8.54]]], "fold": [[[10.5, 0], [10.5, 48.0]], [[11.1969, 0], [11.1969, 48.0]], [[29.0001, 0], [29.0001, 48.0]], [[52.8033, 0], [52.8033, 48.0]], [[70.6065, 0], [70.6065, 48.0]], [[71.3034, 0], [71.3034, 48.0]]], "caras": 1, "rot": false, "nota": "Trasero + 2 laterales de doble pared (puente de 0.7 in y forro de 10.5 in). 6 pliegues verticales. Cara impresa afuera (en el forro queda hacia adentro). Laterales lisos por fuera: todas las ranuras estan en el forro y en el trasero.", "bbox": [0, 0, 81.8034, 48.0], "half": [], "open": [], "nfold": 6}, {"code": "P02", "name": "Bandeja", "qty": 4, "cut": [[[11.0662, -1.25], [11.3431, -1.25], [11.3431, -0.5], [11.5431, -0.5], [11.6631, -0.62], [11.6631, -2.63], [11.5431, -2.75], [11.0662, -2.75], [11.0662, -3.0], [11.0566, -3.0975], [11.0281, -3.1913], [10.9819, -3.2778], [10.9198, -3.3536], [10.844, -3.4157], [10.7575, -3.4619], [10.6637, -3.4904], [10.5662, -3.5], [9.6857, -3.3802], [8.8052, -3.2708], [7.9246, -3.1719], [7.0441, -3.0833], [6.1636, -3.0052], [5.2831, -2.9375], [4.4026, -2.8802], [3.5221, -2.8333], [2.6415, -2.7969], [1.761, -2.7708], [0.8805, -2.7552], [0.0, -2.75], [-0.8805, -2.7552], [-1.761, -2.7708], [-2.6416, -2.7969], [-3.5221, -2.8333], [-4.4026, -2.8802], [-5.2831, -2.9375], [-6.1636, -3.0052], [-7.0441, -3.0833], [-7.9246, -3.1719], [-8.8052, -3.2708], [-9.6857, -3.3802], [-10.5662, -3.5], [-10.6637, -3.4904], [-10.7575, -3.4619], [-10.844, -3.4157], [-10.9198, -3.3536], [-10.9819, -3.2778], [-11.0281, -3.1913], [-11.0566, -3.0975], [-11.0662, -3.0], [-11.0662, -2.75], [-11.5431, -2.75], [-11.6631, -2.63], [-11.6631, -0.62], [-11.5431, -0.5], [-11.3431, -0.5], [-11.3431, -1.25], [-11.0662, -1.25], [-11.0662, 0.0], [-11.0662, 1.75], [-11.4531, 1.75], [-11.4531, 4.25], [-11.0662, 4.25], [-11.0662, 5.75], [-11.4531, 5.75], [-11.4531, 8.25], [-11.0662, 8.25], [-11.0662, 16.4147], [-7.5, 16.4147], [-7.5, 16.9016], [-4.5, 16.9016], [-4.5, 16.4147], [4.5, 16.4147], [4.5, 16.9016], [7.5, 16.9016], [7.5, 16.4147], [11.0662, 16.4147], [11.0662, 8.25], [11.4531, 8.25], [11.4531, 5.75], [11.0662, 5.75], [11.0662, 4.25], [11.4531, 4.25], [11.4531, 1.75], [11.0662, 1.75], [11.0662, 0.0]]], "fold": [[[-11.0662, 0], [11.0662, 0]]], "caras": 1, "rot": false, "nota": "Piso + labio de canto curvo (3.5 in en las puntas), UN pliegue. 2 lenguetas traseras, 2 por costado y un gancho en cada punta del labio. Las 4 iguales. Cara impresa = cara inferior del piso (queda al frente en el labio).", "bbox": [-11.6631, -3.5, 11.6631, 16.9016], "half": [], "open": [], "nfold": 1}, {"code": "P03", "name": "Zocalo", "qty": 1, "cut": [[[-11.0662, 0], [11.0662, 0], [11.0662, 1.75], [11.3431, 1.75], [11.3431, 1.0], [11.5431, 1.0], [11.6631, 1.12], [11.6631, 3.13], [11.5431, 3.25], [11.0662, 3.25], [11.0662, 6.25], [11.3431, 6.25], [11.3431, 5.5], [11.5431, 5.5], [11.6631, 5.62], [11.6631, 7.63], [11.5431, 7.75], [11.0662, 7.75], [11.0662, 9.8031], [-11.0662, 9.8031], [-11.0662, 7.75], [-11.5431, 7.75], [-11.6631, 7.63], [-11.6631, 5.62], [-11.5431, 5.5], [-11.3431, 5.5], [-11.3431, 6.25], [-11.0662, 6.25], [-11.0662, 3.25], [-11.5431, 3.25], [-11.6631, 3.13], [-11.6631, 1.12], [-11.5431, 1.0], [-11.3431, 1.0], [-11.3431, 1.75], [-11.0662, 1.75]]], "fold": [], "caras": 1, "rot": true, "nota": "Placa plana, 2 ganchos por lado. Sin pliegues.", "bbox": [-11.6631, 0, 11.6631, 9.8031], "half": [], "open": [], "nfold": 0}, {"code": "P04", "name": "Cabezal", "qty": 1, "cut": [[[-12.0, 0], [12.0, 0], [12.0, 13.5], [11.952, 13.9877], [11.8097, 14.4567], [11.5787, 14.8889], [11.2678, 15.2678], [10.8889, 15.5787], [10.4567, 15.8097], [9.9877, 15.952], [9.5, 16.0], [-9.5, 16.0], [-9.9877, 15.952], [-10.4567, 15.8097], [-10.8889, 15.5787], [-11.2678, 15.2678], [-11.5787, 14.8889], [-11.8097, 14.4567], [-11.952, 13.9877], [-12.0, 13.5]]], "fold": [], "caras": 1, "rot": true, "nota": "Placa plana 24 x 16 in, entra 4 in en las ranuras abiertas de los laterales. Sin pliegues ni trabas.", "bbox": [-12.0, 0, 12.0, 16.0], "half": [], "open": [], "nfold": 0}], "UNFOLD": [10.5, 11.1969, 29.0001, 52.8033, 70.6065, 71.3034, 81.8034]}, "body": {"back": [[[[11.9016, 0.0], [11.9016, 48.0], [-11.9016, 48.0], [-11.9016, 0.0]], [[-7.53, 9.8031], [-7.53, 10.7815], [-4.47, 10.7815], [-4.47, 9.8031]], [[4.47, 9.8031], [4.47, 10.7815], [7.53, 10.7815], [7.53, 9.8031]], [[-7.53, 19.3031], [-7.53, 20.2815], [-4.47, 20.2815], [-4.47, 19.3031]], [[4.47, 19.3031], [4.47, 20.2815], [7.53, 20.2815], [7.53, 19.3031]], [[-7.53, 28.8031], [-7.53, 29.7815], [-4.47, 29.7815], [-4.47, 28.8031]], [[4.47, 28.8031], [4.47, 29.7815], [7.53, 29.7815], [7.53, 28.8031]], [[-7.53, 38.3031], [-7.53, 39.2815], [-4.47, 39.2815], [-4.47, 38.3031]], [[4.47, 38.3031], [4.47, 39.2815], [7.53, 39.2815], [7.53, 38.3031]]]], "sideR": [[[[17.8032, 0.0], [17.8032, 48.0], [1.5158, 48.0], [1.5158, 44.0], [1.2874, 44.0], [1.2874, 48.0], [0.0, 48.0], [0.0, 0.0]]]], "bridgeR": [[[[0.6969, 0.0], [0.6969, 48.0], [0.0, 48.0], [0.0, 0.0]]]], "linerR": [[[[10.5, 0.0], [10.5, 48.0], [0.0, 48.0], [0.0, 0.0]], [[1.1358, 11.21], [1.1358, 13.54], [1.3642, 13.54], [1.3642, 11.21]], [[2.97, 9.8031], [2.97, 10.7815], [5.53, 10.7815], [5.53, 9.8031]], [[6.97, 9.8031], [6.97, 10.7815], [9.53, 10.7815], [9.53, 9.8031]], [[1.1358, 20.71], [1.1358, 23.04], [1.3642, 23.04], [1.3642, 20.71]], [[2.97, 19.3031], [2.97, 20.2815], [5.53, 20.2815], [5.53, 19.3031]], [[6.97, 19.3031], [6.97, 20.2815], [9.53, 20.2815], [9.53, 19.3031]], [[1.1358, 30.21], [1.1358, 32.54], [1.3642, 32.54], [1.3642, 30.21]], [[2.97, 28.8031], [2.97, 29.7815], [5.53, 29.7815], [5.53, 28.8031]], [[6.97, 28.8031], [6.97, 29.7815], [9.53, 29.7815], [9.53, 28.8031]], [[1.1358, 39.71], [1.1358, 42.04], [1.3642, 42.04], [1.3642, 39.71]], [[2.97, 38.3031], [2.97, 39.2815], [5.53, 39.2815], [5.53, 38.3031]], [[6.97, 38.3031], [6.97, 39.2815], [9.53, 39.2815], [9.53, 38.3031]], [[1.1358, 1.71], [1.1358, 4.04], [1.3642, 4.04], [1.3642, 1.71]], [[1.1358, 6.21], [1.1358, 8.54], [1.3642, 8.54], [1.3642, 6.21]]]], "sideL": [[[[0.0, 0.0], [0.0, 48.0], [-1.2874, 48.0], [-1.2874, 44.0], [-1.5158, 44.0], [-1.5158, 48.0], [-17.8032, 48.0], [-17.8032, 0.0]]]], "bridgeL": [[[[0.0, 0.0], [0.0, 48.0], [-0.6969, 48.0], [-0.6969, 0.0]]]], "linerL": [[[[-10.5, 48.0], [-10.5, 0.0], [0.0, 0.0], [0.0, 48.0]], [[-1.3642, 11.21], [-1.3642, 13.54], [-1.1358, 13.54], [-1.1358, 11.21]], [[-5.53, 9.8031], [-5.53, 10.7815], [-2.97, 10.7815], [-2.97, 9.8031]], [[-9.53, 9.8031], [-9.53, 10.7815], [-6.97, 10.7815], [-6.97, 9.8031]], [[-1.3642, 20.71], [-1.3642, 23.04], [-1.1358, 23.04], [-1.1358, 20.71]], [[-5.53, 19.3031], [-5.53, 20.2815], [-2.97, 20.2815], [-2.97, 19.3031]], [[-9.53, 19.3031], [-9.53, 20.2815], [-6.97, 20.2815], [-6.97, 19.3031]], [[-1.3642, 30.21], [-1.3642, 32.54], [-1.1358, 32.54], [-1.1358, 30.21]], [[-5.53, 28.8031], [-5.53, 29.7815], [-2.97, 29.7815], [-2.97, 28.8031]], [[-9.53, 28.8031], [-9.53, 29.7815], [-6.97, 29.7815], [-6.97, 28.8031]], [[-1.3642, 39.71], [-1.3642, 42.04], [-1.1358, 42.04], [-1.1358, 39.71]], [[-5.53, 38.3031], [-5.53, 39.2815], [-2.97, 39.2815], [-2.97, 38.3031]], [[-9.53, 38.3031], [-9.53, 39.2815], [-6.97, 39.2815], [-6.97, 38.3031]], [[-1.3642, 1.71], [-1.3642, 4.04], [-1.1358, 4.04], [-1.1358, 1.71]], [[-1.3642, 6.21], [-1.3642, 8.54], [-1.1358, 8.54], [-1.1358, 6.21]]]]}, "tray": {"deck": [[[[-11.0662, 1.75], [-11.4531, 1.75], [-11.4531, 4.25], [-11.0662, 4.25], [-11.0662, 5.75], [-11.4531, 5.75], [-11.4531, 8.25], [-11.0662, 8.25], [-11.0662, 16.4147], [-7.5, 16.4147], [-7.5, 16.9016], [-4.5, 16.9016], [-4.5, 16.4147], [4.5, 16.4147], [4.5, 16.9016], [7.5, 16.9016], [7.5, 16.4147], [11.0662, 16.4147], [11.0662, 8.25], [11.4531, 8.25], [11.4531, 5.75], [11.0662, 5.75], [11.0662, 4.25], [11.4531, 4.25], [11.4531, 1.75], [11.0662, 1.75], [11.0662, 0.0], [-11.0662, 0.0]]]], "lip": [[[[11.3431, -1.25], [11.3431, -0.5], [11.5431, -0.5], [11.6631, -0.62], [11.6631, -2.63], [11.5431, -2.75], [11.0662, -2.75], [11.0662, -3.0], [11.0566, -3.0975], [11.0281, -3.1913], [10.9819, -3.2778], [10.9198, -3.3536], [10.844, -3.4157], [10.7575, -3.4619], [10.6637, -3.4904], [10.5662, -3.5], [9.6857, -3.3802], [8.8052, -3.2708], [7.9246, -3.1719], [7.0441, -3.0833], [6.1636, -3.0052], [5.2831, -2.9375], [4.4026, -2.8802], [3.5221, -2.8333], [2.6415, -2.7969], [1.761, -2.7708], [0.8805, -2.7552], [0.0, -2.75], [-0.8805, -2.7552], [-1.761, -2.7708], [-2.6416, -2.7969], [-3.5221, -2.8333], [-4.4026, -2.8802], [-5.2831, -2.9375], [-6.1636, -3.0052], [-7.0441, -3.0833], [-7.9246, -3.1719], [-8.8052, -3.2708], [-9.6857, -3.3802], [-10.5662, -3.5], [-10.6637, -3.4904], [-10.7575, -3.4619], [-10.844, -3.4157], [-10.9198, -3.3536], [-10.9819, -3.2778], [-11.0281, -3.1913], [-11.0566, -3.0975], [-11.0662, -3.0], [-11.0662, -2.75], [-11.5431, -2.75], [-11.6631, -2.63], [-11.6631, -0.62], [-11.5431, -0.5], [-11.3431, -0.5], [-11.3431, -1.25], [-11.0662, -1.25], [-11.0662, 0.0], [11.0662, 0.0], [11.0662, -1.25]]]]}, "zoc": [[[[-11.0662, 0.0], [11.0662, 0.0], [11.0662, 1.75], [11.3431, 1.75], [11.3431, 1.0], [11.5431, 1.0], [11.6631, 1.12], [11.6631, 3.13], [11.5431, 3.25], [11.0662, 3.25], [11.0662, 6.25], [11.3431, 6.25], [11.3431, 5.5], [11.5431, 5.5], [11.6631, 5.62], [11.6631, 7.63], [11.5431, 7.75], [11.0662, 7.75], [11.0662, 9.8031], [-11.0662, 9.8031], [-11.0662, 7.75], [-11.5431, 7.75], [-11.6631, 7.63], [-11.6631, 5.62], [-11.5431, 5.5], [-11.3431, 5.5], [-11.3431, 6.25], [-11.0662, 6.25], [-11.0662, 3.25], [-11.5431, 3.25], [-11.6631, 3.13], [-11.6631, 1.12], [-11.5431, 1.0], [-11.3431, 1.0], [-11.3431, 1.75], [-11.0662, 1.75]]]], "head": [[[[-12.0, 0.0], [12.0, 0.0], [12.0, 13.5], [11.952, 13.9877], [11.8097, 14.4567], [11.5787, 14.8889], [11.2678, 15.2678], [10.8889, 15.5787], [10.4567, 15.8097], [9.9877, 15.952], [9.5, 16.0], [-9.5, 16.0], [-9.9877, 15.952], [-10.4567, 15.8097], [-10.8889, 15.5787], [-11.2678, 15.2678], [-11.5787, 14.8889], [-11.8097, 14.4567], [-11.952, 13.9877], [-12.0, 13.5]]]], "rend": {"1": {"A": 1, "B": 1}, "10": {"A": 10, "B": 10}, "25": {"A": 25, "B": 25}, "50": {"A": 50, "B": 50}, "100": {"A": 100, "B": 100}, "250": {"A": 250, "B": 250}, "500": {"A": 500, "B": 500}}, "util": {"A": 92.9, "B": 56.8}};
+const P=DATA.P,T=P.T,TEND=7,PI=Math.PI;
+const q=new URLSearchParams(location.search);if(q.get('shot'))document.body.classList.add('shot');if(q.get('cap'))document.body.classList.add('cap');
+document.getElementById('dims').textContent=`${P.W} x ${P.D} x ${P.H} in · corrugado EB 5 mm · 7 piezas · laterales lisos de doble pared · 1 display = 2 hojas 83 x 50 in`;
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const dark=matchMedia('(prefers-color-scheme: dark)').matches&&!q.get('shot');
+const cam=new THREE.PerspectiveCamera(30,1,1,1500);
+const ctl=new THREE.OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f96,0.8));
+const sun=new THREE.DirectionalLight(0xffffff,0.65);sun.position.set(50,120,90);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-70,right:70,top:90,bottom:-30,near:1,far:320});scene.add(sun);
+const fill=new THREE.DirectionalLight(0xffffff,0.3);fill.position.set(-60,40,-50);scene.add(fill);
+const floorM=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.ShadowMaterial({opacity:0.18}));floorM.rotation.x=-PI/2;floorM.receiveShadow=true;scene.add(floorM);
+const grid=new THREE.GridHelper(160,16,dark?0x3a4046:0xc9ced4,dark?0x2a2f34:0xdde1e5);grid.position.y=0.001;scene.add(grid);
+
+let BRAND=null;
+function brandBg(w,h){const s=Math.min(2,1600/Math.max(w,h))*Math.max(1,window.devicePixelRatio||1);const W=Math.round(w*s),Hh=Math.round(h*s);
+  const c=document.createElement('canvas');c.width=W;c.height=Hh;const g=c.getContext('2d');const u=Math.min(W,Hh)/100;
+  const gr=g.createLinearGradient(0,0,0,Hh);gr.addColorStop(0,dark?'#20262c':'#f6f8fa');gr.addColorStop(1,dark?'#15191d':'#dfe5ea');g.fillStyle=gr;g.fillRect(0,0,W,Hh);
+  g.save();g.globalAlpha=dark?0.07:0.06;g.fillStyle=dark?'#ffffff':'#1f3a5f';g.font=`900 ${34*u}px "Arial Black","Helvetica Neue",Arial,sans-serif`;g.textAlign='center';g.textBaseline='middle';
+  g.translate(W/2,Hh*0.52);g.rotate(-0.12);g.fillText('CB PRINTS',0,0);g.restore();
+  const m=4*u;g.textBaseline='alphabetic';g.textAlign='left';
+  g.fillStyle=dark?'#e8eef4':'#1f3a5f';g.font=`900 ${7.2*u}px "Arial Black","Helvetica Neue",Arial,sans-serif`;g.fillText('CB PRINTS',m,m+6.4*u);
+  g.fillStyle='#0e8f8a';g.fillRect(m,m+8.6*u,22*u,0.7*u);
+  g.fillStyle=dark?'#a3b4c4':'#4a5d70';g.font=`600 ${2.3*u}px "Helvetica Neue",Arial,sans-serif`;g.fillText('DISPLAYS POP · DISEÑO ESTRUCTURAL',m,m+12.4*u);
+  g.textAlign='right';g.fillText('Floor display 4 bandejas armado fácil · corrugado EB 5 mm',W-m,Hh-m);
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;if(BRAND)BRAND.dispose();BRAND=t;scene.background=t;}
+
+// ---------------- materiales: kraft por dentro, impreso gris por fuera (como el display actual; sin arte del cliente)
+const KRAFT=new THREE.MeshStandardMaterial({color:0xc9a06c,roughness:0.85});
+const PRINT=new THREE.MeshStandardMaterial({color:0x8e959c,roughness:0.6,side:THREE.DoubleSide});
+const HEADM=new THREE.MeshStandardMaterial({color:0xb9bec3,roughness:0.6,side:THREE.DoubleSide});
+const EDGE=new THREE.LineBasicMaterial({color:0x6d5a43});
+function shape(r){const s=new THREE.Shape(r[0].map(p=>new THREE.Vector2(p[0],p[1])));for(const h of r.slice(1))s.holes.push(new THREE.Path(h.map(p=>new THREE.Vector2(p[0],p[1]))));return s;}
+function edges(polys){const v=[];for(const r of polys)for(const ring of r)for(let i=0;i<ring.length;i++){const a=ring[i],b=ring[(i+1)%ring.length];
+  for(const z of[-0.004,T+0.004])v.push(a[0],a[1],z,b[0],b[1],z);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));return new THREE.LineSegments(g,EDGE);}
+// placa: anillos en su plano, espesor de z=0 a z=T; la cara impresa es z=0
+function slab(polys,pm){const g=new THREE.Group();
+  for(const r of polys){const geo=new THREE.ExtrudeGeometry(shape(r),{depth:T,bevelEnabled:false,curveSegments:6});
+    const m=new THREE.Mesh(geo,KRAFT);m.castShadow=true;m.receiveShadow=true;g.add(m);
+    if(pm){const o=new THREE.Mesh(new THREE.ShapeGeometry(shape(r),6),pm);o.position.z=-0.01;o.receiveShadow=true;g.add(o);}}
+  g.add(edges(polys));return g;}
+function grp(parent,x,y,z){const p=new THREE.Group();p.position.set(x||0,y||0,z||0);(parent||scene).add(p);return p;}
+
+// ---------------- P01 cuerpo
+const B=DATA.body,bodyG=grp(scene);
+const back=slab(B.back,PRINT);back.position.z=-P.D/2;bodyG.add(back);
+// lateral de doble pared: pliegue trasero -> lateral -> puente -> forro (los 3 pliegues giran 90 grados hacia adentro)
+function chain(s,sg){const piv=grp(bodyG,sg*P.XS,0,P.ZB);const a=slab(B['side'+s],PRINT);a.position.z=-T/2;piv.add(a);
+  const pb=grp(piv,sg*P.DS,0,0);const b=slab(B['bridge'+s],PRINT);b.position.z=-T/2;pb.add(b);
+  const pl=grp(pb,sg*P.BR,0,0);const c=slab(B['liner'+s],PRINT);c.position.z=-T/2;pl.add(c);return {piv,pb,pl,sg,a,b};}
+const CR=chain('R',1),CL_=chain('L',-1);const pivR=CR.piv,pivL=CL_.piv;
+if(q.get('cut')){CR.a.visible=false;CR.b.visible=false;}   // corte: sin lateral derecho exterior para ver la camara
+// ---------------- P02 bandejas
+function trayMake(){const g=grp(scene);const F=grp(g);F.rotation.x=-PI/2;F.position.y=-T;   // F: marco plano de la bandeja
+  F.add(slab(DATA.tray.deck,PRINT));
+  const lp=grp(F);lp.add(slab(DATA.tray.lip,PRINT));
+  return {g,lp};}
+const TRAYS=P.LEVELS.map(()=>trayMake());
+// ---------------- P03 zocalo y P04 cabezal
+const zoc=slab(DATA.zoc,PRINT);zoc.rotation.y=PI;scene.add(zoc);
+const head=slab(DATA.head,HEADM);head.rotation.y=PI;scene.add(head);
+
+// ---------------- cotas
+const COT=new THREE.Group();scene.add(COT);
+const CM=new THREE.LineBasicMaterial({color:0x0e8f8a});
+function label(txt,x,y,z){const c=document.createElement('canvas');c.width=256;c.height=96;const g=c.getContext('2d');
+  g.fillStyle='rgba(255,255,255,0.92)';g.fillRect(8,14,240,68);g.strokeStyle='#0e8f8a';g.lineWidth=4;g.strokeRect(8,14,240,68);
+  g.fillStyle='#0b5f5c';g.font='bold 44px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText(txt,128,49);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));s.scale.set(9,3.4,1);s.position.set(x,y,z);s.renderOrder=9;COT.add(s);}
+function dline(a,b){const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a),new THREE.Vector3(...b)]);COT.add(new THREE.Line(g,CM));}
+{const W=P.W/2,Dz=P.D/2;dline([-W,0.2,Dz+4],[W,0.2,Dz+4]);dline([-W,0.2,Dz],[-W,0.2,Dz+5]);dline([W,0.2,Dz],[W,0.2,Dz+5]);label(`${P.W} in`,0,2.6,Dz+4);
+ dline([W+4,0.2,-Dz],[W+4,0.2,Dz]);dline([W,0.2,-Dz],[W+5,0.2,-Dz]);dline([W,0.2,Dz],[W+5,0.2,Dz]);label(`${P.D} in`,W+4,2.6,0);
+ dline([W+3,0,Dz+3],[W+3,P.H,Dz+3]);dline([W,P.H,-Dz+1.5],[W+4,P.H,Dz+3]);label(`${P.H} in`,W+3,P.H/2,Dz+3);
+ dline([-W-3,0,Dz+1],[-W-3,P.HB,Dz+1]);label(`${P.HB} in`,-W-3,P.HB/2+6,Dz+1);}
+let SHOWCOT=q.get('cot')!=='0';
+
+const STEPS=["<b>1. Cuerpo P01</b>: doblar puente y forro de cada lateral hacia adentro, abrir los 2 pliegues traseros a 90° y pararlo.",
+ "<b>2. Zócalo P03</b>: meter sus ganchos en las ranuras bajas del forro 3/4 in arriba y bajarlo al piso. Sin pliegues.",
+ "<b>3. Bandeja 1</b>: subir el labio (único pliegue), apoyarla 3/4 in arriba con lengüetas y ganchos en sus ranuras y bajarla: traba todo a la vez.",
+ "<b>4. Bandeja 2</b>: igual, un solo movimiento.","<b>5. Bandeja 3</b>: igual.","<b>6. Bandeja 4</b>: igual.",
+ "<b>7. Cabezal P04</b>: bajarlo por las 2 ranuras abiertas de los laterales. Sin trabas.",
+ "<b>Armado</b> · 7 piezas, sin pegamento ni secuencias de trabas."];
+const ease=x=>x<0?0:x>1?1:x*x*(3-2*x),cl=x=>Math.min(1,Math.max(0,x));
+let EXP=q.get('explode')==='1';
+function setT(t){
+  
+  // flexion de los laterales mientras entra cada pieza (los ganchos pasan por fuera)
+  let fx=0;const bump=(t0,t1)=>{if(t>t0&&t<t1){const u=(t-t0)/(t1-t0);fx=Math.max(fx,Math.sin(PI*u));}};
+  bump(1.05,1.6);P.LEVELS.forEach((_,k)=>bump(2+k+0.3,2+k+0.72));
+  const dl=0.05*fx,a0=ease(t/0.45),a1=ease((t-0.4)/0.45);
+  for(const C of[CR,CL_]){C.pb.rotation.y=-C.sg*PI/2*a0;C.pl.rotation.y=-C.sg*PI/2*a0;C.piv.rotation.y=-C.sg*(PI/2*a1-dl);}
+  const ex=EXP&&t>=TEND;
+  // zocalo
+  {const s=cl(t-1),mv=ease(s/0.6),dr=ease((s-0.6)/0.4);zoc.visible=t>1;
+   zoc.position.set(0,P.TR*(1-dr),P.ZL+T/2+16*(1-mv)+(ex?14:0));}
+  TRAYS.forEach((tr,k)=>{const s=cl(t-(2+k));tr.g.visible=t>2+k;
+    const fo=ease(s/0.3),mv=ease((s-0.3)/0.4),dr=ease((s-0.7)/0.3);tr.lp.rotation.x=-PI/2*fo;
+    tr.g.position.set(0,P.LEVELS[k]+P.TR*(1-dr)+(ex?k*4+4:0),P.ZL-T/2+22*(1-mv)+(ex?18+k*3:0));});
+  {const s=cl(t-6),mv=ease(s);head.visible=t>6;head.position.set(0,P.HD_Y0+18*(1-mv)+(ex?14:0),P.ZH+T/2);}
+  COT.visible=SHOWCOT&&t>=TEND&&!ex;
+  document.getElementById('caption').innerHTML=ex?"<b>Vista explosionada</b> · P01 Cuerpo x1, P02 Bandeja x4, P03 Zócalo x1, P04 Cabezal x1":STEPS[Math.min(7,Math.floor(t+1e-6))];}
+const TG=[0,28,0];
+const VIEWS={persp:[78,58,112],front:[0,31,178],side:[178,31,0.01],back:[0,31,-178],top:[0,170,0.01],tres:[-84,62,118],
+  hook:[30,P.LEVELS[1]+6,22,P.XS,P.LEVELS[1]+1.5,P.ZL-2],lejos:[96,70,170,0,28,14]};
+function view(v){const p=VIEWS[v]||VIEWS.persp;const s=EXP?1.35:1;const tg=p.length>3?p.slice(3):TG;cam.position.set(p[0]*s,p[1]*s,p[2]*s+(EXP?12:0));ctl.target.set(tg[0],tg[1],tg[2]+(EXP?10:0));ctl.update();
+  document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));}
+function size(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();brandBg(w,h);}
+addEventListener('resize',size);size();
+const tEl=document.getElementById('t');let playing=false,last=0;
+tEl.oninput=()=>{playing=false;setT(+tEl.value);};
+document.getElementById('play').onclick=()=>{playing=!playing;if(playing&&+tEl.value>=TEND)tEl.value=0;document.getElementById('play').textContent=playing?'Pausa ❚❚':'Armar ▶';};
+document.getElementById('exp').onclick=e=>{EXP=!EXP;e.target.classList.toggle('on',EXP);tEl.value=TEND;setT(TEND);view('persp');};
+document.getElementById('cot').onclick=e=>{SHOWCOT=!SHOWCOT;e.target.classList.toggle('on',SHOWCOT);setT(+tEl.value);};
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>view(b.dataset.v));
+const msg=t=>{document.getElementById('msg').textContent=t;};
+let DL=null;const dlP=(window.claude&&window.claude.use)?window.claude.use('downloads').then(d=>DL=d).catch(()=>null):Promise.resolve(null);
+const stamp=()=>new Date().toISOString().slice(0,16).replace(/[-:T]/g,'');
+async function offer(blob,name){
+  await dlP;
+  if(DL){try{await DL.save({filename:name,data:blob});msg('Guardado: '+name);}
+    catch(e){msg(e&&e.code==='declined'?'Descarga cancelada':'No se pudo guardar ('+(e&&e.code||'error')+')');}return;}
+  if(window.claude){msg('Esta vista no permite descargar archivos');return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);msg('Guardado: '+name);}
+document.getElementById('snap').onclick=()=>{renderer.render(scene,cam);
+  renderer.domElement.toBlob(b=>b?offer(b,`Display_4_bandejas_${stamp()}.png`):msg('No se pudo capturar'),'image/png');};
+let REC=null,ONREC=false;
+function stopRec(){if(REC&&REC.state!=='inactive')REC.stop();}
+document.getElementById('rec').onclick=()=>{
+  if(REC&&REC.state==='recording'){stopRec();return;}
+  if(!window.MediaRecorder||!renderer.domElement.captureStream){msg('Este navegador no puede grabar video');return;}
+  const types=['video/mp4;codecs=avc1','video/mp4;codecs=avc1.42E01E','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';const ext=mime.startsWith('video/mp4')?'mp4':'webm';
+  const chunks=[];REC=new MediaRecorder(renderer.domElement.captureStream(30),mime?{mimeType:mime,videoBitsPerSecond:8e6}:{});
+  REC.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  REC.onstop=()=>{const b=document.getElementById('rec');b.classList.remove('on');b.textContent='● Grabar video';ONREC=false;
+    offer(new Blob(chunks,{type:mime||'video/webm'}),`Display_4_bandejas_armado_${stamp()}.${ext}`);};
+  EXP=false;document.getElementById('exp').classList.remove('on');
+  tEl.value=0;setT(0);REC.start(250);ONREC=true;playing=true;
+  const b=document.getElementById('rec');b.classList.add('on');b.textContent='■ Detener';document.getElementById('play').textContent='Pausa ❚❚';msg('Grabando el armado…');};
+
+const t0=q.get('step')!=null?+q.get('step'):TEND;tEl.value=t0;setT(t0);view(q.get('view')||'persp');
+let frames=0;
+function loop(ts){const dt=Math.min(0.05,(ts-last)/1000);last=ts;
+  if(playing){let t=+tEl.value+dt*0.5;if(t>=TEND){t=TEND;playing=false;document.getElementById('play').textContent='Armar ▶';if(ONREC)setTimeout(stopRec,1500);}tEl.value=t;setT(t);}
+  ctl.update();renderer.render(scene,cam);if(++frames>3)window.__ready=true;requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+</script>
+<script>(function(){if(new URLSearchParams(location.search).get('auto')==='0')return;addEventListener('load',function(){setTimeout(function(){var b=document.getElementById('play')||document.getElementById('bPlay')||document.getElementById('aPlay');if(b)b.click();},1200);});})();</script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<title>Pie para backdrop</title>
+<style>
+:root{--bg:#eef1f6;--panel:#fff;--fg:#16213a;--muted:#5d6883;--line:#d6dcea;--accent:#1f56c9;--ink:#fff;--warn:#9a5a0b;--warnbg:#fff4e2}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1526;--panel:#171f34;--fg:#e8edf8;--muted:#9ba7c3;--line:#2b3653;--accent:#6f95ff;--ink:#0b1020;--warn:#f0b062;--warnbg:#2b2114;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1526;--panel:#171f34;--fg:#e8edf8;--muted:#9ba7c3;--line:#2b3653;--accent:#6f95ff;--ink:#0b1020;--warn:#f0b062;--warnbg:#2b2114;color-scheme:dark}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 "Helvetica Neue",Arial,sans-serif}
+.app{display:grid;grid-template-columns:320px 1fr;height:100%}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:18px 16px;overflow:auto;display:flex;flex-direction:column;gap:14px;min-width:0}
+h1{font-size:19px;margin:0;line-height:1.2}
+.sub{color:var(--muted);font-size:12.5px}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--fg);padding:6px 10px;border-radius:6px;cursor:pointer}
+button:hover{border-color:var(--accent)} button.on{background:var(--accent);color:var(--ink);border-color:var(--accent)}
+.steps{list-style:none;margin:0;padding:0}
+.steps li{display:grid;grid-template-columns:22px 1fr;gap:6px;padding:5px 6px;border-radius:6px;font-size:13px;cursor:pointer}
+.steps li .n{color:var(--muted);font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.steps li.cur{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.steps li.done{color:var(--muted)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+td{padding:3px 0;border-bottom:1px solid var(--line)} td:last-child{text-align:right}
+.note{background:var(--warnbg);color:var(--warn);border-radius:6px;padding:8px 10px;font-size:12.5px}
+main{position:relative;min-width:0}
+canvas#c{display:block;width:100%;height:100%}
+.cap{position:absolute;left:16px;right:16px;bottom:14px;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);padding:8px 12px;border-radius:8px;font-size:13px}
+@media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:56vh auto}main{order:-1}aside{border-right:0;border-top:1px solid var(--line)}}
+</style>
+<div class="app">
+<aside>
+  <div><h1>Respaldo de una pieza para backdrop de foam</h1>
+  <div class="sub">Prop 4 × 7 ft (48 × 84 in) · frente 100 % libre · corrugado EB 5 mm, un solo troquel · diseño conceptual verificado en geometría, sin prueba física</div></div>
+  <div><div class="lbl">Armado</div>
+    <div class="row" style="margin:6px 0"><button id="bPlay">▶ Reproducir</button><button id="bPrev">◀</button><button id="bNext">▶|</button></div>
+    <input id="tl" type="range" min="0" max="1000" value="1000" aria-label="Línea de tiempo del armado">
+    <ol class="steps" id="steps"></ol></div>
+  <div><div class="lbl">Vistas</div>
+    <div class="row" style="margin-top:6px"><button data-v="persp">3/4</button><button data-v="front">Frente</button><button data-v="side">Lateral</button><button data-v="back">Atrás</button><button data-v="top">Arriba</button><button data-v="foot">Pata</button></div></div>
+  <div><div class="lbl">Datos</div>
+    <table>
+      <tr><td>Troquel plano</td><td>48 × 82 in, 1 pieza</td></tr>
+      <tr><td>Panel de respaldo</td><td>48 × 76 in</td></tr>
+      <tr><td>Aletas (2)</td><td>16 × 70 in, a 90°</td></tr>
+      <tr><td>Patas (2)</td><td>6 × 16 in en el piso</td></tr>
+      <tr><td>Lastre recomendado</td><td>2 × 10 kg por pata</td></tr>
+      <tr><td>Viento de diseño (FS 1.5)</td><td>≈ 17 km/h</td></tr>
+      <tr><td>Hojas 83 × 50 por backdrop</td><td>1</td></tr>
+      <tr><td>Delante del foam</td><td>nada</td></tr>
+    </table></div>
+  <div class="note">Cálculo estimado (Cf 1.5, FS 1.5). Pegado foam–respaldo, rigidez de las aletas de EB y traba de las patas deben verificarse con una prueba física.</div>
+</aside>
+<main><canvas id="c"></canvas><div class="cap" id="cap"></div></main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const D = {"params":{"TE":0.197,"PW":48.0,"PH":76.0,"XA":8.0,"XB":40.0,"D":16.0,"HF":70.0,"FOOT":6.0,"TAB":{"z0":-5.0,"z1":-1.0,"d":1.5,"ch":0.3},"BD_W":48.0,"BD_H":84.0,"FOAM":0.394},"parts":{"R01":[[[0,0],[8.0,0],[8.0,-1.0],[6.5,-1.3],[6.5,-4.7],[8.0,-5.0],[8.0,-6.0],[24.0,-6.0],[40.0,-6.0],[40.0,-5.0],[41.5,-4.7],[41.5,-1.3],[40.0,-1.0],[40.0,0],[48.0,0],[48.0,76.0],[0,76.0]]]}};
+const P = D.params, TE = P.TE;
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true, logarithmicDepthBuffer:true});
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+function bg(){ return getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#eef1f6'; }
+scene.background = new THREE.Color(bg());
+const cam = new THREE.PerspectiveCamera(32, 1, 10, 1500);
+const ctl = new THREE.OrbitControls(cam, canvas); ctl.addEventListener('change', () => render());
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f99, 0.75));
+const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(-60, 140, 120); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, {left:-80, right:80, top:120, bottom:-40, near:10, far:400}); scene.add(sun);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({opacity:0.18}));
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+const world = new THREE.Group(); world.rotation.x = -Math.PI/2; world.position.x = -P.BD_W/2; scene.add(world);
+const M = {
+  kraft: new THREE.MeshStandardMaterial({color:0xc39a63, roughness:0.9}),
+  kraftIn: new THREE.MeshStandardMaterial({color:0xb08752, roughness:0.95}),
+  edge: new THREE.MeshStandardMaterial({color:0xd9bf91, roughness:1}),
+  bag: new THREE.MeshStandardMaterial({color:0x8f8a7e, roughness:1}),
+  foamEdge: new THREE.MeshStandardMaterial({color:0xf4f4f4, roughness:0.6})
+};
+function artTex(){
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 896; const g = cv.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 896); gr.addColorStop(0, '#f6f8fc'); gr.addColorStop(1, '#dfe6f3'); g.fillStyle = gr; g.fillRect(0, 0, 512, 896);
+  g.strokeStyle = '#b8c3da'; g.lineWidth = 6; g.setLineDash([22, 14]); g.strokeRect(40, 40, 432, 816);
+  g.fillStyle = '#7b88a6'; g.textAlign = 'center'; g.font = 'bold 44px Arial'; g.fillText('ARTE DEL CLIENTE', 256, 420);
+  g.font = '30px Arial'; g.fillText('backdrop 48 × 84 in', 256, 470);
+  const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; return t;
+}
+// placa en el plano local X-Z (a -> X, b -> Z), espesor centrado en Y
+function plate(pts, mats){
+  const s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]);
+  const g = new THREE.ExtrudeGeometry(s, {depth:TE, bevelEnabled:false}); g.translate(0, 0, -TE/2); g.rotateX(Math.PI/2);
+  const m = new THREE.Mesh(g, mats || [M.kraft, M.edge]); m.castShadow = true; m.receiveShadow = true;
+  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), new THREE.LineBasicMaterial({color:0x7a5a30})));
+  return m;
+}
+const G0 = P;
+const piece = new THREE.Group(); world.add(piece);
+const panelPts = [[0,0],[G0.XA,0],[G0.XA,G0.HF],[G0.XA+G0.D,0],[G0.XB,G0.HF],[G0.XB,0],[G0.PW,0],[G0.PW,G0.PH],[0,G0.PH]];
+const panel = plate(panelPts); panel.position.y = TE/2; piece.add(panel);
+function wing(side){
+  const s = side;          // -1 aleta izquierda (bisagra XA, abre hacia +X del panel), +1 derecha
+  const hx = s < 0 ? G0.XA : G0.XB;
+  const pivot = new THREE.Group(); pivot.position.set(hx, TE/2, 0); piece.add(pivot);
+  const fin = plate(s < 0 ? [[0,0],[G0.D,0],[0,G0.HF]] : [[0,0],[-G0.D,0],[0,G0.HF]]); pivot.add(fin);
+  const footPiv = new THREE.Group(); pivot.add(footPiv);
+  const foot = plate(s < 0 ? [[0,0],[G0.D,0],[G0.D,-G0.FOOT],[0,-G0.FOOT]] : [[0,0],[0,-G0.FOOT],[-G0.D,-G0.FOOT],[-G0.D,0]]); footPiv.add(foot);
+  const tabPiv = new THREE.Group(); footPiv.add(tabPiv);
+  const t = G0.TAB;
+  const tab = plate(s < 0 ? [[0,t.z1],[-t.d,t.z1-t.ch],[-t.d,t.z0+t.ch],[0,t.z0]] : [[0,t.z0],[t.d,t.z0+t.ch],[t.d,t.z1-t.ch],[0,t.z1]]); tabPiv.add(tab);
+  const bags = new THREE.Group(); world.add(bags);
+  [2.05, 6.15].forEach(z => { const b = new THREE.Mesh(new THREE.BoxGeometry(6.2, 12, 4), M.bag); b.castShadow = true;
+    b.position.set(s < 0 ? G0.XA - G0.FOOT/2 : G0.XB + G0.FOOT/2, G0.D/2, z + TE); bags.add(b); });
+  return {s, pivot, footPiv, tabPiv, bags};
+}
+const wings = [wing(-1), wing(1)];
+function setFold(th, ph, ps){
+  wings.forEach(w => { w.pivot.rotation.z = w.s < 0 ? th : -th; w.footPiv.rotation.x = ph; w.tabPiv.rotation.z = w.s < 0 ? -ps : ps; });
+}
+const fe = M.foamEdge.clone(); const foamMats = [fe, fe, fe, new THREE.MeshStandardMaterial({map:artTex(), roughness:0.6}), fe, fe];
+foamMats.forEach(m => { m.polygonOffset = true; m.polygonOffsetFactor = -6; m.polygonOffsetUnits = -6; });
+const foamMesh = new THREE.Mesh(new THREE.BoxGeometry(P.BD_W, P.FOAM, P.BD_H), foamMats);
+foamMesh.position.set(P.BD_W/2, -P.FOAM/2 - 0.12, P.BD_H/2); foamMesh.castShadow = true;
+const foam = new THREE.Group(); foam.add(foamMesh); world.add(foam);
+
+const cl = x => Math.max(0, Math.min(1, x)); const ease = t => t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+const H90 = Math.PI/2;
+let st = {};
+const STEPS = [
+  {t:'Respaldo plano, de una sola pieza (troquel 48 × 82 in).', d:1.2, f:a => { st.show = a > 0.001; }},
+  {t:'Abrir las 2 aletas 90° hacia atrás por sus bisagras verticales.', d:2.0, f:a => { st.th = a * H90; }},
+  {t:'Plegar las patas hacia afuera, 90° respecto de la aleta.', d:1.6, f:a => { st.ph = a * H90; }},
+  {t:'Bajar al piso: el respaldo queda parado sobre panel, aletas y patas.', d:1.4, f:a => { st.lift = 1 - a; }},
+  {t:'Subir la lengüeta de cada pata contra el panel y fijarla con velcro.', d:1.2, f:a => { st.ps = a * H90; }},
+  {t:'Lastre: 2 bolsas de 10 kg sobre cada pata.', d:1.4, f:a => { st.bag = a; }},
+  {t:'Pegar el foam al frente del respaldo (velcro o cinta doble faz). Frente libre.', d:2.4, f:a => { st.foam = a; }},
+];
+const starts = []; let total = 0; STEPS.forEach(s => { starts.push(total); total += s.d; });
+let curT = total;
+const ol = document.getElementById('steps');
+STEPS.forEach((s, i) => { const li = document.createElement('li'); li.innerHTML = `<span class="n">${String(i+1).padStart(2,'0')}</span><span>${s.t}</span>`; li.onclick = () => { playing = false; setPlay(); setTime(starts[i] + s.d); }; ol.appendChild(li); });
+function setTime(t){
+  curT = Math.max(0, Math.min(total, t));
+  st = {show:false, th:0, ph:0, lift:1, ps:0, bag:0, foam:0};
+  STEPS.forEach((s, i) => s.f(ease(cl((curT - starts[i]) / s.d))));
+  piece.visible = st.show; piece.position.z = st.lift * (G0.FOOT + 0.5);
+  setFold(st.th, st.ph, st.ps);
+  wings.forEach(w => { w.bags.visible = st.bag > 0.001; w.bags.position.z = (1 - st.bag) * 20; });
+  foam.visible = st.foam > 0.001; foam.position.y = -(1 - st.foam) * 40;
+  const idx = Math.min(STEPS.length - 1, starts.filter(s => s <= curT + 1e-6).length - 1);
+  [...ol.children].forEach((li, i) => { li.classList.toggle('cur', i === idx && curT < total); li.classList.toggle('done', curT >= starts[i] + STEPS[i].d); });
+  document.getElementById('cap').textContent = curT >= total ? 'Armado completo. Arrastrá para girar, rueda para acercar.' : `Paso ${idx+1}: ${STEPS[idx].t}`;
+  document.getElementById('tl').value = Math.round(1000 * curT / total);
+  render();
+}
+const VIEWS = {persp:[110, 75, 185, 0, 40, -8], front:[14, 46, 230, 0, 44, 0], side:[230, 46, -8, 0, 46, -8], back:[-120, 80, -190, 0, 38, -10],
+  top:[0, 260, 0.1, 0, 0, -8], foot:[-60, 45, -75, -18, 8, -8], flat:[-70, 60, -150, 0, 40, 0]};
+function setView(v){ const p = VIEWS[v]; cam.position.set(p[0], p[1], p[2]); ctl.target.set(p[3], p[4], p[5]); cam.up.set(0, v === 'top' ? 0 : 1, v === 'top' ? -1 : 0); ctl.update(); render(); }
+document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => setView(b.dataset.v));
+let playing = false, last = 0; const bPlay = document.getElementById('bPlay');
+function setPlay(){ bPlay.textContent = playing ? '❚❚ Pausa' : '▶ Reproducir'; }
+bPlay.onclick = () => { if (!playing && curT >= total) setTime(0); playing = !playing; last = performance.now(); setPlay(); requestAnimationFrame(loop); };
+document.getElementById('bNext').onclick = () => { playing = false; setPlay(); const i = starts.findIndex((s, k) => s + STEPS[k].d > curT + 1e-6); if (i >= 0) setTime(starts[i] + STEPS[i].d); };
+document.getElementById('bPrev').onclick = () => { playing = false; setPlay(); const i = starts.filter(s => s < curT - 1e-6).length - 1; setTime(i > 0 ? starts[i-1] + STEPS[i-1].d : 0); };
+document.getElementById('tl').oninput = e => { playing = false; setPlay(); setTime(total * e.target.value / 1000); };
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function loop(now){ if (!playing) return; const dt = (now - last) / 1000; last = now; setTime(curT + dt * (reduce ? 4 : 1)); if (curT >= total){ playing = false; setPlay(); } else requestAnimationFrame(loop); }
+function resize(){ const r = canvas.parentElement.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); cam.aspect = r.width / Math.max(1, r.height); cam.updateProjectionMatrix(); render(); }
+function render(){ renderer.render(scene, cam); }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { scene.background = new THREE.Color(bg()); render(); });
+window.addEventListener('resize', resize);
+setView('persp'); resize(); setTime(total);
+window.__api = {setView, setTime, starts, STEPS, total, render, cam, ctl};
+</script>
+
+<script>(function(){if(new URLSearchParams(location.search).get('auto')==='0')return;addEventListener('load',function(){setTimeout(function(){var b=document.getElementById('play')||document.getElementById('bPlay')||document.getElementById('aPlay');if(b)b.click();},1200);});})();</script>

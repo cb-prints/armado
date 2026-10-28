@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marco cabezal y banco</title>
+<style>
+:root{--bg:#eef0f2;--panel:#ffffff;--ink:#1d2329;--muted:#5d6670;--line:#d5d9de;--accent:#c8102e;--accent2:#0b7a3b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--accent:#ff5a6e;--accent2:#3fcf7f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--accent:#ff5a6e;--accent2:#3fcf7f;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+#app{display:flex;flex-direction:column;height:100%}
+header{padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:16px;margin:0}
+header .dim{color:var(--muted)}
+#stage{flex:1;position:relative;min-height:320px}
+#stage canvas{display:block;width:100%;height:100%}
+#caption{position:absolute;left:16px;right:16px;bottom:12px;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+#caption b{color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line);align-items:center}
+button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+input[type=range]{flex:1;min-width:140px}
+.sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+body.shot header,body.shot .bar,body.shot #caption{display:none}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div id="app">
+<header><h1>Marco con cabezal, estante y banco</h1><span class="dim" id="dims"></span></header>
+<div id="stage"><div id="caption"></div></div>
+<div class="bar">
+  <button data-v="persp" class="on">3/4</button><button data-v="front">Frente</button><button data-v="side">Lateral</button><button data-v="back">Atrás</button><button data-v="top">Arriba</button>
+  <span class="sep"></span>
+  <button id="play">Armar ▶</button><input id="t" type="range" min="0" max="8" step="0.01" value="8">
+  <button id="exp">Explosionada</button><button id="cot" class="on">Cotas</button>
+</div>
+</div>
+<script>
+const DATA={"P": {"SHW": 96.0, "SHH": 48.0, "MRG": 0.4, "GAP": 0.4, "T": 0.3937, "SW": 0.45, "CL": 0.04, "H": 82.0, "W": 78.0, "DEP": 28.0, "CW": 8.0, "CD": 12.0, "XO": 39.0, "XI": 31.0, "ZR": -6.0, "ZF": 6.0, "SPAN": 61.92, "XE": 30.96, "DEV": 45.0, "FOLDS": [2.5, 8.5, 16.5, 28.5, 36.5, 42.5], "FLG": 2.5, "S0": 16.5, "CLU": 0.02, "UW": 5.6, "UL": 20.0, "UH": 3.0, "UZ": 1.4468, "UT": 0.4337, "USW": 0.8274, "SHEET": {"L": [96.0, 48.0], "S": [83.0, 48.0]}, "TR": 1.5, "NH": 2.0, "NK": 2.5, "TPR": 0.5, "FLW": 1.2, "TW": 3.0, "DW": 2.0, "YS": 36.0, "ZP": 3.5, "PH_HOOKS": [6.0, 17.0, 28.0], "PANEL_TABS": [-24.0, -8.0, 8.0, 24.0], "S_ARR": [-2.6, 2.6], "HH": 11.0, "HD": 8.0, "HZ": 3.8032, "NN": 2.0, "HDROP": 1.5, "HW": 0.5, "HDEV": 30.0, "HFOLDS": [11.0, 19.0], "YB": 30.0, "BZ0": 6.0, "BZ1": 22.0, "XL": 33.0, "LZ0": 6.0, "LZ1": 20.25, "LG_HOOKS": [6.0, 20.0], "LG_TABS": [10.5, 15.5], "AH": 8.0, "AX": 34.5, "ZAF": 19.0, "ZAR": 7.6, "AP_TABS": [-22.0, -8.0, 8.0, 22.0], "PHL": 35.6063, "BL": 29.6063, "RN": 4.0, "RZ0": 3.6968, "RZ1": 20.25, "RB_TABS": [12.0, 16.0], "RB_HOOKS": [8.0, 14.0], "DOUBLE": true, "HEM": true, "FHT": 1.2874, "FHL": 1.5, "HT": 0.3937, "XB": 38.6063, "BZB": 21.6063, "SZR": -5.6063, "SZF": 5.6063, "SB_X": [-19.0, -6.0, 6.0, 19.0], "SB_HOOKS": [20.8, 26.0], "SB_Y0": 19.6, "SZ0": 3.2631, "SZ1": -5.5563, "SYT": 35.6063, "PK": 0.15, "TT": 0.5437, "PKW": 0.49, "PKL": 3.1, "TOP_TABS": [-24.0, -12.0, 12.0, 24.0], "TTL": 0.4737, "PZF": 3.6968, "TS0": 29.57815, "TS1": 30.42185, "TFW": 0.7, "FT_X": [-32.25, 32.25, -0.75], "FTD": 0.94685, "AP_SL": [[-33.0, 4.0], [0.0, 4.0], [33.0, 4.0]], "FHA": 1.0, "BZP": 3.7368, "XC": 30.96, "SE": 21.566300000000002}, "C01": {"faces": [[[[[1.9718, 82.0], [1.9718, 80.0], [2.4218, 80.0], [2.4218, 82.0], [9.5782, 82.0], [9.5782, 80.0], [10.0282, 80.0], [10.0282, 82.0], [12.0, 82.0], [12.0, 0.0], [0.0, 0.0], [0.0, 82.0]], [[9.8751, 35.5781], [9.8751, 36.028], [10.1501, 36.028], [10.1501, 37.5282], [7.0499, 37.5282], [7.0499, 36.028], [7.3249, 36.028], [7.3249, 35.5781]], [[8.5249, 8.0199], [9.2749, 8.0199], [9.2749, 5.9799], [9.7251, 5.9799], [9.7251, 8.0199], [9.7251, 8.0201], [9.7251, 9.5201], [8.5249, 9.5201]], [[8.5249, 20.5201], [8.5249, 19.0199], [9.2749, 19.0199], [9.2749, 16.9799], [9.7251, 16.9799], [9.7251, 19.0199], [9.7251, 19.0201], [9.7251, 20.5201]], [[8.5249, 31.5201], [8.5249, 30.0199], [9.2749, 30.0199], [9.2749, 27.9799], [9.7251, 27.9799], [9.7251, 30.0199], [9.7251, 30.0201], [9.7251, 31.5201]], [[4.6751, 35.5781], [4.6751, 36.028], [4.9501, 36.028], [4.9501, 37.5282], [1.8499, 37.5282], [1.8499, 36.028], [2.1249, 36.028], [2.1249, 35.5781]]]], [[[[8.0, 82.0], [8.0, 0.0], [0.0, 0.0], [0.0, 82.0]], [[1.7749, 8.0201], [1.7749, 8.0199], [1.7749, 5.9799], [2.2251, 5.9799], [2.2251, 8.0199], [2.9751, 8.0199], [2.9751, 9.5201], [1.7749, 9.5201]], [[2.2251, 19.9799], [2.2251, 22.0199], [2.9751, 22.0199], [2.9751, 23.5201], [1.7749, 23.5201], [1.7749, 22.0201], [1.7749, 22.0199], [1.7749, 19.9799]]]], [[[[6.0, 82.0], [6.0, 0.0], [0.0, 0.0], [0.0, 82.0]]]], [[[[1.23, 82.0], [1.23, 78.98], [1.6637, 78.98], [1.6637, 82.0], [2.5, 82.0], [2.5, 0.0], [1.6637, 0.0], [1.6637, 3.02], [1.23, 3.02], [1.23, 0.0], [0.0, 0.0], [0.0, 82.0]]]]], "back": [[[[[0.0, 82.0], [0.0, 0.0], [-8.0, 0.0], [-8.0, 82.0]]]], [[[[0.0, 82.0], [0.0, 0.0], [-6.0, 0.0], [-6.0, 82.0]]]], [[[[-1.6637, 82.0], [-1.6637, 78.98], [-1.23, 78.98], [-1.23, 82.0], [0.0, 82.0], [0.0, 0.0], [-1.23, 0.0], [-1.23, 3.02], [-1.6637, 3.02], [-1.6637, 0.0], [-2.5, 0.0], [-2.5, 82.0]]]]], "flaps": [{"face": 0, "rect": [8.525000000000002, 8.02, 9.725000000000001, 9.52], "axis": "amin"}, {"face": 0, "rect": [8.525000000000002, 19.02, 9.725000000000001, 20.52], "axis": "amin"}, {"face": 0, "rect": [8.525000000000002, 30.02, 9.725000000000001, 31.52], "axis": "amin"}, {"face": 0, "rect": [1.8499999999999979, 36.02815, 4.949999999999999, 37.52815], "axis": "top"}, {"face": 0, "rect": [7.050000000000001, 36.02815, 10.150000000000002, 37.52815], "axis": "top"}, {"face": 1, "rect": [1.7749999999999986, 8.02, 2.974999999999998, 9.52], "axis": "amax"}, {"face": 1, "rect": [1.7749999999999986, 22.02, 2.974999999999998, 23.52], "axis": "amax"}]}, "C02": {"faces": [[[[[0.0, 0.0], [0.0, 82.0], [1.9718, 82.0], [1.9718, 80.0], [2.4218, 80.0], [2.4218, 82.0], [9.5782, 82.0], [9.5782, 80.0], [10.0282, 80.0], [10.0282, 82.0], [12.0, 82.0], [12.0, 0.0]], [[9.8751, 36.0283], [7.3249, 36.0283], [7.3249, 35.5783], [7.0499, 35.5783], [7.0499, 34.078], [10.1501, 34.078], [10.1501, 35.5783], [9.8751, 35.5783]], [[9.2749, 5.9801], [8.5249, 5.9801], [8.5249, 4.4799], [9.7251, 4.4799], [9.7251, 5.9799], [9.7251, 5.9801], [9.7251, 8.0201], [9.2749, 8.0201]], [[9.2749, 16.9801], [8.5249, 16.9801], [8.5249, 15.4799], [9.7251, 15.4799], [9.7251, 16.9799], [9.7251, 16.9801], [9.7251, 19.0201], [9.2749, 19.0201]], [[9.2749, 27.9801], [8.5249, 27.9801], [8.5249, 26.4799], [9.7251, 26.4799], [9.7251, 27.9799], [9.7251, 27.9801], [9.7251, 30.0201], [9.2749, 30.0201]], [[4.6751, 36.0283], [2.1249, 36.0283], [2.1249, 35.5783], [1.8499, 35.5783], [1.8499, 34.078], [4.9501, 34.078], [4.9501, 35.5783], [4.6751, 35.5783]]]], [[[[0.0, 0.0], [0.0, 82.0], [8.0, 82.0], [8.0, 0.0]], [[2.9751, 8.0199], [2.9751, 9.5201], [1.7749, 9.5201], [1.7749, 8.0201], [1.7749, 8.0199], [1.7749, 5.9799], [2.2251, 5.9799], [2.2251, 8.0199]], [[2.9751, 23.5201], [1.7749, 23.5201], [1.7749, 22.0201], [1.7749, 22.0199], [1.7749, 19.9799], [2.2251, 19.9799], [2.2251, 22.0199], [2.9751, 22.0199]]]], [[[[0.0, 0.0], [0.0, 82.0], [6.0, 82.0], [6.0, 0.0]]]], [[[[1.6637, 0.0], [1.6637, 3.02], [1.23, 3.02], [1.23, 0.0], [0.0, 0.0], [0.0, 82.0], [1.23, 82.0], [1.23, 78.98], [1.6637, 78.98], [1.6637, 82.0], [2.5, 82.0], [2.5, 0.0]]]]], "back": [[[[[-8.0, 0.0], [-8.0, 82.0], [0.0, 82.0], [0.0, 0.0]]]], [[[[-6.0, 0.0], [-6.0, 82.0], [0.0, 82.0], [0.0, 0.0]]]], [[[[-1.23, 0.0], [-1.23, 3.02], [-1.6636, 3.02], [-1.6636, 0.0], [-2.5, 0.0], [-2.5, 82.0], [-1.6637, 82.0], [-1.6637, 78.98], [-1.23, 78.98], [-1.23, 82.0], [0.0, 82.0], [0.0, 0.0]]]]], "flaps": [{"face": 0, "rect": [8.524999999999999, 4.48, 9.725000000000001, 5.98], "axis": "amin"}, {"face": 0, "rect": [8.524999999999999, 15.48, 9.725000000000001, 16.98], "axis": "amin"}, {"face": 0, "rect": [8.524999999999999, 26.48, 9.725000000000001, 27.98], "axis": "amin"}, {"face": 0, "rect": [1.8500000000000014, 34.07815, 4.949999999999999, 35.57815], "axis": "bot"}, {"face": 0, "rect": [7.050000000000001, 34.07815, 10.149999999999999, 35.57815], "axis": "bot"}, {"face": 1, "rect": [1.7749999999999986, 8.02, 2.9750000000000014, 9.52], "axis": "amax"}, {"face": 1, "rect": [1.7749999999999986, 22.02, 2.9750000000000014, 23.52], "axis": "amax"}]}, "P03": [[[[[-31.9337, 3.35], [-31.7837, 3.5], [-31.4337, 3.5], [-31.4337, 2.0], [-30.96, 2.0], [-30.96, 11.0], [30.96, 11.0], [30.96, 2.0], [31.4337, 2.0], [31.4337, 3.5], [31.7837, 3.5], [31.9337, 3.35], [31.9337, 0.0], [-31.9337, 0.0]]]], [[[[-30.96, 8.0], [30.96, 8.0], [30.96, 0.0], [-30.96, 0.0]]]], [[[[-30.96, 9.0], [-31.4337, 9.0], [-31.4337, 7.5], [-31.7837, 7.5], [-31.9337, 7.65], [-31.9337, 11.0], [31.9337, 11.0], [31.9337, 7.65], [31.7837, 7.5], [31.4337, 7.5], [31.4337, 9.0], [30.96, 9.0], [30.96, 0.0], [-30.96, 0.0]]]]], "U01": [[[-2.8, 20.0], [-0.4137, 20.0], [-0.4137, 3.0], [0.4137, 3.0], [0.4137, 20.0], [2.8, 20.0], [2.8, 0.0], [-2.8, 0.0]]], "P01": [[[-30.96, 6.0], [-31.4337, 6.0], [-31.4337, 4.5], [-31.7437, 4.5], [-31.8937, 4.65], [-31.8937, 7.85], [-31.7437, 8.0], [-30.96, 8.0], [-30.96, 17.0], [-31.4337, 17.0], [-31.4337, 15.5], [-31.7437, 15.5], [-31.8937, 15.65], [-31.8937, 18.85], [-31.7437, 19.0], [-30.96, 19.0], [-30.96, 28.0], [-31.4337, 28.0], [-31.4337, 26.5], [-31.7437, 26.5], [-31.8937, 26.65], [-31.8937, 29.85], [-31.7437, 30.0], [-30.96, 30.0], [-30.96, 35.6063], [-25.5, 35.6063], [-25.5, 36.15], [-22.5, 36.15], [-22.5, 35.6063], [-9.5, 35.6063], [-9.5, 36.15], [-6.5, 36.15], [-6.5, 35.6063], [6.5, 35.6063], [6.5, 36.15], [9.5, 36.15], [9.5, 35.6063], [22.5, 35.6063], [22.5, 36.15], [25.5, 36.15], [25.5, 35.6063], [30.96, 35.6063], [30.96, 30.0], [31.4337, 30.0], [31.4337, 31.5], [31.7437, 31.5], [31.8937, 31.35], [31.8937, 28.15], [31.7437, 28.0], [30.96, 28.0], [30.96, 19.0], [31.4337, 19.0], [31.4337, 20.5], [31.7437, 20.5], [31.8937, 20.35], [31.8937, 17.15], [31.7437, 17.0], [30.96, 17.0], [30.96, 8.0], [31.4337, 8.0], [31.4337, 9.5], [31.7437, 9.5], [31.8937, 9.35], [31.8937, 6.15], [31.7437, 6.0], [30.96, 6.0], [30.96, 0.0], [-30.96, 0.0]], [[22.4699, 29.5781], [25.5301, 29.5781], [25.5301, 30.4219], [22.4699, 30.4219]], [[18.7749, 24.3201], [18.7749, 22.8201], [18.7749, 22.8199], [18.7749, 20.7799], [19.2251, 20.7799], [19.2251, 22.8199], [19.9751, 22.8199], [19.9751, 24.3201]], [[18.7749, 25.9799], [19.2251, 25.9799], [19.2251, 28.0199], [19.9751, 28.0199], [19.9751, 29.5201], [18.7749, 29.5201], [18.7749, 28.0201], [18.7749, 28.0199]], [[10.4699, 29.5781], [13.5301, 29.5781], [13.5301, 30.4219], [10.4699, 30.4219]], [[5.7749, 20.7799], [6.2251, 20.7799], [6.2251, 22.8199], [6.9751, 22.8199], [6.9751, 24.3201], [5.7749, 24.3201], [5.7749, 22.8201], [5.7749, 22.8199]], [[5.7749, 29.5201], [5.7749, 28.0201], [5.7749, 28.0199], [5.7749, 25.9799], [6.2251, 25.9799], [6.2251, 28.0199], [6.9751, 28.0199], [6.9751, 29.5201]], [[-0.2251, 13.9799], [0.2251, 13.9799], [0.2251, 16.0199], [0.9751, 16.0199], [0.9751, 17.5201], [-0.2251, 17.5201], [-0.2251, 16.0201], [-0.2251, 16.0199]], [[0.2251, 7.9799], [0.2251, 10.0199], [0.9751, 10.0199], [0.9751, 11.5201], [-0.2251, 11.5201], [-0.2251, 10.0201], [-0.2251, 10.0199], [-0.2251, 7.9799]], [[-6.2251, 24.3201], [-6.2251, 22.8201], [-6.2251, 22.8199], [-6.2251, 20.7799], [-5.7749, 20.7799], [-5.7749, 22.8199], [-5.0249, 22.8199], [-5.0249, 24.3201]], [[-6.2251, 25.9799], [-5.7749, 25.9799], [-5.7749, 28.0199], [-5.0249, 28.0199], [-5.0249, 29.5201], [-6.2251, 29.5201], [-6.2251, 28.0201], [-6.2251, 28.0199]], [[-13.5301, 29.5781], [-10.4699, 29.5781], [-10.4699, 30.4219], [-13.5301, 30.4219]], [[-19.2251, 20.7799], [-18.7749, 20.7799], [-18.7749, 22.8199], [-18.0249, 22.8199], [-18.0249, 24.3201], [-19.2251, 24.3201], [-19.2251, 22.8201], [-19.2251, 22.8199]], [[-19.2251, 29.5201], [-19.2251, 28.0201], [-19.2251, 28.0199], [-19.2251, 25.9799], [-18.7749, 25.9799], [-18.7749, 28.0199], [-18.0249, 28.0199], [-18.0249, 29.5201]], [[-25.5301, 29.5781], [-22.4699, 29.5781], [-22.4699, 30.4219], [-25.5301, 30.4219]]], "P02": [[[-30.96, -3.85], [-31.4337, -3.85], [-31.4337, -4.05], [-31.8937, -3.93], [-31.8937, -1.27], [-31.4337, -1.15], [-31.4337, -1.35], [-30.96, -1.35], [-30.96, 1.35], [-31.4337, 1.35], [-31.4337, 1.15], [-31.8937, 1.27], [-31.8937, 3.93], [-31.4337, 4.05], [-31.4337, 3.85], [-30.96, 3.85], [-30.96, 5.6063], [30.96, 5.6063], [30.96, 3.85], [31.4337, 3.85], [31.4337, 4.05], [31.8937, 3.93], [31.8937, 1.27], [31.4337, 1.15], [31.4337, 1.35], [30.96, 1.35], [30.96, -1.35], [31.4337, -1.35], [31.4337, -1.15], [31.8937, -1.27], [31.8937, -3.93], [31.4337, -4.05], [31.4337, -3.85], [30.96, -3.85], [30.96, -5.6063], [-30.96, -5.6063]], [[22.4699, 3.7251], [22.4699, 3.2749], [25.5301, 3.2749], [25.5301, 3.7251]], [[6.4699, 3.7251], [6.4699, 3.2749], [9.5301, 3.2749], [9.5301, 3.7251]], [[-9.5301, 3.7251], [-9.5301, 3.2749], [-6.4699, 3.2749], [-6.4699, 3.7251]], [[-25.5301, 3.7251], [-25.5301, 3.2749], [-22.4699, 3.2749], [-22.4699, 3.7251]]], "B01": [[[-38.6063, 21.6063], [38.6063, 21.6063], [38.6063, 6.0], [30.96, 6.0], [30.96, 3.7368], [25.5, 3.7368], [25.5, 3.2631], [22.5, 3.2631], [22.5, 3.7368], [13.5, 3.7368], [13.5, 3.2631], [10.5, 3.2631], [10.5, 3.7368], [-10.5, 3.7368], [-10.5, 3.2631], [-13.5, 3.2631], [-13.5, 3.7368], [-22.5, 3.7368], [-22.5, 3.2631], [-25.5, 3.2631], [-25.5, 3.7368], [-30.96, 3.7368], [-30.96, 6.0], [-38.6063, 6.0]], [[33.2251, 13.9699], [33.2251, 17.0301], [32.7749, 17.0301], [32.7749, 13.9699]], [[33.2251, 8.9699], [33.2251, 12.0301], [32.7749, 12.0301], [32.7749, 8.9699]], [[31.8699, 19.828], [32.6301, 19.828], [32.6301, 20.2783], [31.8699, 20.2783]], [[23.5301, 7.3749], [23.5301, 7.8251], [20.4699, 7.8251], [20.4699, 7.3749]], [[20.4699, 18.7749], [23.5301, 18.7749], [23.5301, 19.2251], [20.4699, 19.2251]], [[9.5301, 18.7749], [9.5301, 19.2251], [6.4699, 19.2251], [6.4699, 18.7749]], [[9.5301, 7.3749], [9.5301, 7.8251], [6.4699, 7.8251], [6.4699, 7.3749]], [[0.2251, 10.4699], [0.2251, 13.5301], [-0.2251, 13.5301], [-0.2251, 10.4699]], [[0.2251, 14.4699], [0.2251, 17.5301], [-0.2251, 17.5301], [-0.2251, 14.4699]], [[-0.3699, 19.828], [-0.3699, 20.2783], [-1.1301, 20.2783], [-1.1301, 19.828]], [[-6.4699, 18.7749], [-6.4699, 19.2251], [-9.5301, 19.2251], [-9.5301, 18.7749]], [[-6.4699, 7.3749], [-6.4699, 7.8251], [-9.5301, 7.8251], [-9.5301, 7.3749]], [[-20.4699, 18.7749], [-20.4699, 19.2251], [-23.5301, 19.2251], [-23.5301, 18.7749]], [[-20.4699, 7.3749], [-20.4699, 7.8251], [-23.5301, 7.8251], [-23.5301, 7.3749]], [[-31.8699, 19.828], [-31.8699, 20.2783], [-32.6301, 20.2783], [-32.6301, 19.828]], [[-32.7749, 13.9699], [-32.7749, 17.0301], [-33.2251, 17.0301], [-33.2251, 13.9699]], [[-32.7749, 8.9699], [-32.7749, 12.0301], [-33.2251, 12.0301], [-33.2251, 8.9699]]], "B04": [[[-34.5, 8.0], [-23.5, 8.0], [-23.5, 8.5437], [-20.5, 8.5437], [-20.5, 8.0], [-9.5, 8.0], [-9.5, 8.5437], [-6.5, 8.5437], [-6.5, 8.0], [6.5, 8.0], [6.5, 8.5437], [9.5, 8.5437], [9.5, 8.0], [20.5, 8.0], [20.5, 8.5437], [23.5, 8.5437], [23.5, 8.0], [34.5, 8.0], [34.5, 0.0], [33.225, 0.0], [33.225, 4.0], [32.775, 4.0], [32.775, 0.0], [0.225, 0.0], [0.225, 4.0], [-0.225, 4.0], [-0.225, 0.0], [-32.775, 0.0], [-32.775, 4.0], [-33.225, 4.0], [-33.225, 0.0], [-34.5, 0.0]]], "B08": [[[1.7631, 19.6], [-5.5563, 34.1063], [-5.5563, 35.6063], [3.2631, 35.6063], [3.2631, 28.0], [4.0468, 28.0], [4.1968, 27.85], [4.1968, 24.65], [4.0468, 24.5], [3.7368, 24.5], [3.7368, 26.0], [3.2631, 26.0], [3.2631, 22.8], [4.0468, 22.8], [4.1968, 22.65], [4.1968, 19.45], [4.0468, 19.3], [3.7368, 19.3], [3.7368, 20.8], [3.2631, 20.8], [3.2631, 19.6]]], "B02": {"base": [[[[5.5263, 6.0], [5.5263, 4.5], [5.2163, 4.5], [5.0663, 4.65], [5.0663, 7.85], [5.2163, 8.0], [6.0, 8.0], [6.0, 20.0], [5.5263, 20.0], [5.5263, 18.5], [5.2163, 18.5], [5.0663, 18.65], [5.0663, 21.85], [5.2163, 22.0], [6.0, 22.0], [6.0, 29.6063], [7.375, 29.6063], [7.375, 25.6063], [7.825, 25.6063], [7.825, 29.6063], [9.0, 29.6063], [9.0, 30.15], [12.0, 30.15], [12.0, 29.6063], [14.0, 29.6063], [14.0, 30.15], [17.0, 30.15], [17.0, 29.6063], [18.775, 29.6063], [18.775, 25.6063], [19.225, 25.6063], [19.225, 29.6063], [20.2499, 29.6063], [20.2499, 0.0], [17.125, 0.0], [17.125, 0.25], [17.108, 0.3794], [17.058, 0.5], [16.9786, 0.6036], [16.875, 0.683], [16.7544, 0.733], [16.625, 0.75], [9.625, 0.75], [9.4956, 0.733], [9.375, 0.683], [9.2714, 0.6036], [9.192, 0.5], [9.142, 0.3794], [9.125, 0.25], [9.125, 0.0], [6.0, 0.0], [6.0, 6.0]]]], "sk": [{"r": [[[[[29.6063, 0.5968], [29.6063, 0.0], [0.0, 0.0], [0.0, 1.5], [29.6063, 1.5], [29.6063, 1.2968], [30.15, 1.2968], [30.15, 0.5968]]]]], "w": [1.5], "p0": [20.25, 0], "d": [0.0, 1.0], "o": [1, 0]}]}, "B09": {"base": [[[[-9.125, 0.0], [-9.125, 0.25], [-9.142, 0.3794], [-9.192, 0.5], [-9.2714, 0.6036], [-9.375, 0.683], [-9.4956, 0.733], [-9.625, 0.75], [-16.625, 0.75], [-16.7544, 0.733], [-16.875, 0.683], [-16.9786, 0.6036], [-17.058, 0.5], [-17.108, 0.3794], [-17.125, 0.25], [-17.125, 0.0], [-20.2499, 0.0], [-20.2499, 29.6063], [-19.225, 29.6063], [-19.225, 25.6063], [-18.775, 25.6063], [-18.775, 29.6063], [-17.0, 29.6063], [-17.0, 30.15], [-14.0, 30.15], [-14.0, 29.6063], [-12.0, 29.6063], [-12.0, 30.15], [-9.0, 30.15], [-9.0, 29.6063], [-7.825, 29.6063], [-7.825, 25.6063], [-7.375, 25.6063], [-7.375, 29.6063], [-6.0, 29.6063], [-6.0, 22.0], [-5.2163, 22.0], [-5.0663, 21.85], [-5.0663, 18.65], [-5.2163, 18.5], [-5.5263, 18.5], [-5.5263, 20.0], [-6.0, 20.0], [-6.0, 8.0], [-5.2163, 8.0], [-5.0663, 7.85], [-5.0663, 4.65], [-5.2163, 4.5], [-5.5263, 4.5], [-5.5263, 6.0], [-6.0, 6.0], [-6.0, 0.0]]]], "sk": [{"r": [[[[[0.0, 1.5], [29.6063, 1.5], [29.6063, 1.2968], [30.15, 1.2968], [30.15, 0.5968], [29.6063, 0.5968], [29.6063, 0.0], [0.0, 0.0]]]]], "w": [1.5], "p0": [-20.25, 0], "d": [0.0, 1.0], "o": [-1, 0]}]}, "B03": {"base": [[[[-23.5, 8.0], [-23.5, 8.5437], [-20.5, 8.5437], [-20.5, 8.0], [-9.5, 8.0], [-9.5, 8.5437], [-6.5, 8.5437], [-6.5, 8.0], [6.5, 8.0], [6.5, 8.5437], [9.5, 8.5437], [9.5, 8.0], [20.5, 8.0], [20.5, 8.5437], [23.5, 8.5437], [23.5, 8.0], [34.5, 8.0], [34.5, 0.0001], [33.225, 0.0001], [33.225, 4.0], [32.775, 4.0], [32.775, 0.0001], [0.225, 0.0001], [0.225, 4.0], [-0.225, 4.0], [-0.225, 0.0001], [-32.775, 0.0001], [-32.775, 4.0], [-33.225, 4.0], [-33.225, 0.0001], [-34.5, 0.0001], [-34.5, 8.0]]]], "sk": [{"r": [[[[[69.0, 1.0], [69.0, 0.0], [67.725, 0.0], [67.725, 1.0]]], [[[67.275, 1.0], [67.275, 0.0], [34.725, 0.0], [34.725, 1.0]]], [[[34.275, 1.0], [34.275, -0.0], [1.725, -0.0], [1.725, 1.0]]], [[[1.275, 1.0], [1.275, -0.0], [0.0, -0.0], [0.0, 1.0]]]]], "w": [1.0], "p0": [-34.5, 0], "d": [1.0, 0.0], "o": [0, -1]}]}, "B05": {"base": [[[[3.2231, 8.0], [3.2231, 6.5], [2.9131, 6.5], [2.7631, 6.65], [2.7631, 9.85], [2.9131, 10.0], [3.6968, 10.0], [3.6968, 14.0], [3.2231, 14.0], [3.2231, 12.5], [2.9131, 12.5], [2.7631, 12.65], [2.7631, 15.85], [2.9131, 16.0], [3.6968, 16.0], [3.6968, 29.6063], [7.375, 29.6063], [7.375, 25.6063], [7.825, 25.6063], [7.825, 29.6063], [10.5, 29.6063], [10.5, 30.15], [13.5, 30.15], [13.5, 29.6063], [14.5, 29.6063], [14.5, 30.15], [17.5, 30.15], [17.5, 29.6063], [18.775, 29.6063], [18.775, 25.6063], [19.225, 25.6063], [19.225, 29.6063], [20.2499, 29.6063], [20.2499, 0.0], [15.9734, 0.0], [15.9734, 0.25], [15.9564, 0.3794], [15.9064, 0.5], [15.827, 0.6036], [15.7234, 0.683], [15.6028, 0.733], [15.4734, 0.75], [8.4734, 0.75], [8.344, 0.733], [8.2234, 0.683], [8.1198, 0.6036], [8.0404, 0.5], [7.9904, 0.3794], [7.9734, 0.25], [7.9734, 0.0], [3.6968, 0.0], [3.6968, 8.0]]]], "sk": [{"r": [[[[[29.6063, 0.5968], [29.6063, 0.0], [0.0, 0.0], [0.0, 1.5], [29.6063, 1.5], [29.6063, 1.2968], [30.15, 1.2968], [30.15, 0.5968]]]]], "w": [1.5], "p0": [20.25, 0], "d": [0.0, 1.0], "o": [1, 0]}]}, "B06": {"base": [[[[-38.9999, 6.0], [-38.9999, 21.5664], [-39.0, 21.5664], [-39.0, 21.9999], [39.0, 21.9999], [39.0, 21.5664], [38.9999, 21.5664], [38.9999, 6.0], [30.96, 6.0], [30.96, 3.7368], [-30.96, 3.7368], [-30.96, 6.0]]]], "sk": [{"r": [[[[[15.5663, 1.2874], [15.5663, 0.0], [0.0, 0.0], [0.0, 1.2874]]]]], "w": [1.2874], "p0": [39.0, 6.0], "d": [0.0, 1.0], "o": [1, 0]}, {"r": [[[[[78.0, 1.2874], [78.0, 0.0], [0.0, 0.0], [0.0, 1.2874]]]]], "w": [1.2874], "p0": [39.0, 22.0], "d": [-1.0, 0.0], "o": [0, 1]}, {"r": [[[[[15.5663, 1.2874], [15.5663, 0.0], [0.0, 0.0], [0.0, 1.2874]]]]], "w": [1.2874], "p0": [-39.0, 21.566300000000002], "d": [0.0, -1.0], "o": [-1, 0]}]}, "B07": {"base": [[[[30.96, -5.9999], [-30.96, -5.9999], [-30.96, 5.9999], [30.96, 5.9999]]]], "sk": [{"r": [[[[[61.92, 1.2874], [61.92, 0.0], [0.0, 0.0], [0.0, 1.2874]]]]], "w": [1.2874], "p0": [-30.96, -6.0], "d": [1.0, 0.0], "o": [0, -1]}, {"r": [[[[[0.0, 1.2874], [61.92, 1.2874], [61.92, 0.0], [0.0, 0.0]]]]], "w": [1.2874], "p0": [30.96, 6.0], "d": [-1.0, 0.0], "o": [0, 1]}]}};
+const P=DATA.P,T=P.T,H=P.H,TR=P.TR,TEND=8;
+const q=new URLSearchParams(location.search); if(q.get('shot'))document.body.classList.add('shot');
+document.getElementById('dims').textContent=`${P.W} x ${P.DEP} x ${H} in (ancho x fondo x alto) · honeycomb 10 mm · 21 piezas · 6 hojas (2 de 96 x 48 y 4 de 83 x 48 in) · sin pegamento`;
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const dark=matchMedia('(prefers-color-scheme: dark)').matches&&!q.get('shot');
+scene.background=new THREE.Color(dark?0x1b1f23:0xeef0f2);
+const cam=new THREE.PerspectiveCamera(30,1,1,2000);
+const ctl=new THREE.OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f96,0.75));
+const sun=new THREE.DirectionalLight(0xffffff,0.75);sun.position.set(90,160,120);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-90,right:90,top:110,bottom:-60,near:1,far:500});scene.add(sun);
+const fill=new THREE.DirectionalLight(0xffffff,0.3);fill.position.set(-100,60,-80);scene.add(fill);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(800,800),new THREE.ShadowMaterial({opacity:0.18}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const grid=new THREE.GridHelper(240,20,dark?0x3a4046:0xc9ced4,dark?0x2a2f34:0xdde1e5);grid.position.y=0.001;scene.add(grid);
+const FACE=new THREE.MeshStandardMaterial({color:0xf7f7f4,roughness:0.65,side:THREE.DoubleSide});
+const CORE=new THREE.MeshStandardMaterial({color:0xc9a66b,roughness:0.9,side:THREE.DoubleSide});
+const FLAPM=new THREE.MeshStandardMaterial({color:0x2bb3b1,roughness:0.6,side:THREE.DoubleSide});
+const EDGE=new THREE.LineBasicMaterial({color:0x8f969d});
+function shape(r){const s=new THREE.Shape(r[0].map(p=>new THREE.Vector2(p[0],p[1])));for(const h of r.slice(1))s.holes.push(new THREE.Path(h.map(p=>new THREE.Vector2(p[0],p[1]))));return s;}
+function edges(r,z0,z1){const v=[];for(const ring of r)for(let i=0;i<ring.length;i++){const a=ring[i],b=ring[(i+1)%ring.length];for(const z of[z0,z1])v.push(a[0],a[1],z,b[0],b[1],z);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(v,3));return new THREE.LineSegments(g,EDGE);}
+// placa centrada en z (espesor T)
+function slab(r,zc){const g=new THREE.Group();const geo=new THREE.ExtrudeGeometry(shape(r),{depth:T,bevelEnabled:false,curveSegments:8});geo.translate(0,0,(zc||0)-T/2);
+  const m=new THREE.Mesh(geo,[FACE,CORE]);m.castShadow=true;m.receiveShadow=true;g.add(m);g.add(edges(r,(zc||0)+T/2+0.004,(zc||0)-T/2-0.004));return g;}
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+function basis(ex,ey,ez,o){const m=new THREE.Matrix4().makeBasis(V3(...ex),V3(...ey),V3(...ez));m.setPosition(V3(...o));return m;}
+function placed(rs,M){const g=new THREE.Group();const inner=new THREE.Group();for(const r of rs)inner.add(slab(r,0));inner.matrixAutoUpdate=false;inner.matrix.copy(M);g.add(inner);return g;}
+function hemmed(H,M,g){const g0=new THREE.Group(),inner=new THREE.Group();inner.matrixAutoUpdate=false;inner.matrix.copy(M);g0.add(inner);
+  for(const r of H.base)inner.add(slab(r,0));
+  // esquina de cada doblez: el liner exterior es continuo (no se ve nucleo)
+  const corner=(sg,rs)=>{for(const r of rs){const xs=r[0].map(q=>q[0]),s0=Math.min(...xs),s1=Math.max(...xs);
+    const bx=new THREE.Mesh(new THREE.BoxGeometry(s1-s0,T*1.04,T*1.04),FACE);bx.position.set((s0+s1)/2,T/2,0);sg.add(bx);}};
+  // cada canto es una cadena de tramos doblados 90 grados hacia la cara de la V (faldon, fondo, pared interior)
+  for(const k of H.sk){const d=k.d,o=k.o,p=k.p0;let parent=inner;
+    k.r.forEach((rs,i)=>{const sg=new THREE.Group();sg.matrixAutoUpdate=false;
+      sg.matrix.copy(i===0?basis([d[0],d[1],0],[0,0,g],[o[0],o[1],0],[p[0]-o[0]*T/2,p[1]-o[1]*T/2,-g*T/2]):basis([1,0,0],[0,0,-1],[0,1,0],[0,k.w[i-1]-T/2,T/2]));
+      for(const r of rs)sg.add(slab(r,0));corner(sg,rs);parent.add(sg);parent=sg;});}
+  return g0;}
+const A=new THREE.Group();scene.add(A);
+// ---------- columnas: tubo plegado con bisagras en el liner exterior
+function flapMesh(f,zoff){const [a0,b0,a1,b1]=f.rect,w=a1-a0,h=b1-b0;const pv=new THREE.Group();
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,T*0.96),FLAPM);m.castShadow=true;
+  if(f.axis==='amax'){pv.position.set(a1,(b0+b1)/2,zoff);m.position.set(-w/2,0,0);}
+  else if(f.axis==='amin'){pv.position.set(a0,(b0+b1)/2,zoff);m.position.set(w/2,0,0);}
+  else if(f.axis==='top'){pv.position.set((a0+a1)/2,b1,zoff);m.position.set(0,-h/2,0);}
+  else {pv.position.set((a0+a1)/2,b0,zoff);m.position.set(0,h/2,0);}
+  pv.add(m);pv.userData.axis=f.axis;pv.userData.face=f.face;return pv;}
+function setFlap(pv,a){pv.rotation.set(0,0,0);const ax=pv.userData.axis;
+  if(ax==='amax')pv.rotation.y=a;else if(ax==='amin')pv.rotation.y=-a;else if(ax==='top')pv.rotation.x=-a;else pv.rotation.x=a;}
+// esquina de cada doblez en V: el liner exterior es continuo, no se ve nucleo (la costura queda atras, entre las 2 pestanas)
+function cornerBox(parent,xc,zh){const m=new THREE.Mesh(new THREE.BoxGeometry(T+0.004,H,T+0.008),FACE);m.position.set(xc,H/2,zh+T/2);parent.add(m);}
+function column(D,side){
+  const root=new THREE.Group(),frame=new THREE.Group();root.add(frame);frame.matrixAutoUpdate=false;
+  frame.matrix.copy(basis([0,0,1],[0,1,0],[side,0,0],[side*(P.XI+T/2),0,P.ZR]));
+  const hinges=[],flaps=[];
+  // F1 fijo; hacia adelante F2, F3a y pestana B; hacia atras F4, F3b y pestana A (costura a la mitad del costado exterior F3)
+  const fw=[P.CD,P.CW,P.CD/2,P.FLG];let parent=frame;
+  D.faces.forEach((rs,k)=>{let holder;
+    if(k===0){holder=frame;for(const r of rs)frame.add(slab(r,0));}
+    else{const hg=new THREE.Group();hg.position.set(fw[k-1],0,k===1?-T/2:0);hg.userData.sg=-1;parent.add(hg);hinges.push(hg);cornerBox(parent,fw[k-1]-T/2+0.002,hg.position.z);
+      const face=new THREE.Group();face.position.z=T/2;hg.add(face);for(const r of rs)face.add(slab(r,0));parent=hg;holder=face;}
+    for(const f of D.flaps)if(f.face===k){const pv=flapMesh(f,0);holder.add(pv);flaps.push(pv);}
+  });
+  const bw=[0,-P.CW,-P.CD/2];parent=frame;
+  D.back.forEach((rs,k)=>{const hg=new THREE.Group();hg.position.set(bw[k],0,k===0?-T/2:0);hg.userData.sg=1;parent.add(hg);hinges.push(hg);cornerBox(parent,bw[k]+T/2-0.002,hg.position.z);
+    const face=new THREE.Group();face.position.z=T/2;hg.add(face);for(const r of rs)face.add(slab(r,0));parent=hg;});
+  root.userData={hinges,flaps,side};return root;}
+function fold(col,a){for(const h of col.userData.hinges)h.rotation.y=h.userData.sg*a;}
+const C1=column(DATA.C01,-1),C2=column(DATA.C02,1);A.add(C1,C2);
+// U largas: abajo (puente en el piso, sube) y arriba (puente al ras de la boca, baja), en el plano a UZ del costado exterior
+const UPL=[];for(const s of[-1,1])for(const top of[0,1]){const cx=s*(P.XO-P.UZ);
+  const g=placed([DATA.U01],top?basis([0,0,1],[0,-1,0],[-1,0,0],[cx,H,0]):basis([0,0,1],[0,1,0],[1,0,0],[cx,0,0]));g.userData={s,top};UPL.push(g);A.add(g);}
+const PAN=placed([DATA.P01],basis([1,0,0],[0,1,0],[0,0,1],[0,0,P.ZP]));A.add(PAN);
+const SH=placed([DATA.P02],basis([1,0,0],[0,0,1],[0,-1,0],[0,P.YS-T/2,0]));A.add(SH);
+const HDR=new THREE.Group();
+HDR.add(placed(DATA.P03[0],basis([1,0,0],[0,-1,0],[0,0,-1],[0,H,P.HZ])));
+HDR.add(placed(DATA.P03[1],basis([1,0,0],[0,0,-1],[0,1,0],[0,H-P.HH+T/2,P.HD/2])));
+HDR.add(placed(DATA.P03[2],basis([1,0,0],[0,1,0],[0,0,1],[0,H-P.HH,-P.HZ])));A.add(HDR);
+const TOP=placed([DATA.B01],basis([1,0,0],[0,0,1],[0,-1,0],[0,P.YB-T/2,0]));A.add(TOP);
+const LEGS=[-1,1].map(s=>{const g=s<0?hemmed(DATA.B02,basis([0,0,1],[0,1,0],[-1,0,0],[-P.XL,0,0]),-1):hemmed(DATA.B09,basis([0,0,-1],[0,1,0],[1,0,0],[P.XL,0,0]),-1);A.add(g);return g;});
+const APF=hemmed(DATA.B03,basis([1,0,0],[0,1,0],[0,0,1],[0,P.BL-P.AH,P.ZAF]),-1);A.add(APF);
+const APR=placed([DATA.B04],basis([1,0,0],[0,1,0],[0,0,1],[0,P.BL-P.AH,P.ZAR]));A.add(APR);
+const RIB=hemmed(DATA.B05,basis([0,0,1],[0,1,0],[-1,0,0],[0,0,0]),1);A.add(RIB);
+const SBR=P.SB_X.map(x=>{const g=placed([DATA.B08],basis([0,0,1],[0,1,0],[-1,0,0],[x,0,0]));A.add(g);return g;});
+const OVT=hemmed(DATA.B06,basis([1,0,0],[0,0,1],[0,-1,0],[0,P.YB+T/2+0.01,0]),1);A.add(OVT);
+const OVS=hemmed(DATA.B07,basis([1,0,0],[0,0,1],[0,-1,0],[0,P.YS+T/2+0.01,0]),1);A.add(OVS);
+// ---------- cotas
+const cot=new THREE.Group();scene.add(cot);
+function label(txt,pos){const c=document.createElement('canvas');c.width=256;c.height=96;const x=c.getContext('2d');x.fillStyle='rgba(255,255,255,0.92)';x.fillRect(0,0,256,96);
+  x.fillStyle='#c8102e';x.font='bold 54px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,128,50);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));s.scale.set(14,5.25,1);s.position.copy(pos);s.renderOrder=9;cot.add(s);}
+function dim(a,b,txt,off){const m=new THREE.LineBasicMaterial({color:0xc8102e,depthTest:false});const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([a,b]),m);l.renderOrder=8;cot.add(l);
+  for(const p of[a,b]){const t=new THREE.Line(new THREE.BufferGeometry().setFromPoints([p.clone().sub(off),p.clone().add(off)]),m);t.renderOrder=8;cot.add(t);}
+  label(txt,a.clone().add(b).multiplyScalar(0.5));}
+dim(V3(-P.XO,H+5,P.ZF),V3(P.XO,H+5,P.ZF),`${P.W} in`,V3(0,1.5,0));
+dim(V3(-P.XO-6,0,P.ZF),V3(-P.XO-6,H,P.ZF),`${H} in`,V3(1.5,0,0));
+dim(V3(P.XO+6,0,P.ZR),V3(P.XO+6,0,P.BZ1),`${P.DEP} in`,V3(1.5,0,0));
+dim(V3(P.XO+3,0,P.BZ1),V3(P.XO+3,P.YB,P.BZ1),`${P.YB} in`,V3(1.5,0,0));
+dim(V3(-P.XI+4,P.YS,P.ZF+1),V3(-P.XI+4,0,P.ZF+1),`${P.YS} in`,V3(1.5,0,0));
+let COT=q.get('cot')!=='0',EXP=q.get('explode')==='1';
+const STEPS=["<b>1.</b> Plegar cada columna por sus dobleces en V: las 2 pestañas quedan espalda con espalda a la mitad del costado exterior (no se ve de frente ni de atrás). Por adentro del tubo, una U de 20 in sube desde abajo y otra baja desde arriba: abrazan las pestañas y su puente asienta a media madera (3 in) en las muescas.",
+ "<b>2.</b> Columna izquierda parada. Panel bajo levantado 1.5 in: sus 3 ganchos entran en la columna (solapas turquesa) y se baja al piso. Por detrás, 4 ménsulas del estante enganchadas al panel.",
+ "<b>3.</b> Estante: sus 2 arpones entran en la columna izquierda 1.5 in más arriba y se baja sobre las lengüetas del panel.",
+ "<b>4.</b> Columna derecha levantada 1.5 in: entran los ganchos del panel y los arpones del estante (solapas abajo) y se baja al piso.",
+ "<b>5.</b> Cabezal (2 personas): se baja desde arriba; sus 4 ganchos colgantes entran por arriba del tubo y asientan en las muescas.",
+ "<b>6.</b> Patas del banco levantadas 1.5 in: 2 ganchos en el frente de cada columna y se bajan al piso; el faldón de cada pata dobla hacia el centro. Pata central: 2 ganchos al panel bajo.",
+ "<b>7.</b> Faldón frontal (con dobladillo pegado abajo) y faldón trasero: se bajan sobre las 3 patas a media madera.",
+ "<b>8.</b> Cubierta: llega hasta el panel bajo (sin luz), sus 4 lengüetas lo atraviesan y se baja; las lengüetas de los faldones de las patas la atraviesan. Encima, las tapas del banco y de la barra con su dobladillo pegado.",
+ `<b>Armado</b> · ${P.W} x ${P.DEP} x ${H} in · columnas de una pieza ${P.CW} x ${P.CD} in · estante a ${P.YS} in · banco a ${P.YB} in · sin pegamento.`];
+const ease=x=>x<0?0:x>1?1:x*x*(3-2*x),cl=x=>Math.min(1,Math.max(0,x));
+const off=(g,x,y,z)=>g.position.set(x,y,z);
+function bump(p){return p>0&&p<1?1.15*Math.sin(Math.PI*p):0;}
+function setT(t){
+  const f=ease(cl(t/0.55));fold(C1,f*Math.PI/2);fold(C2,f*Math.PI/2);
+  const c2=cl(t-3);off(C2,3*(1-ease(cl(c2/0.5))),TR*(1-ease(cl((c2-0.5)/0.5))),0);
+  const ins=(g,t0,dy,dz)=>{const p=cl(t-t0);g.visible=t>t0;off(g,1.4*(1-ease(cl((p-0.45)/0.25))),dy*(1-ease(cl((p-0.7)/0.3))),dz*(1-ease(cl(p/0.45))));return p;};
+  const pp=ins(PAN,1,TR,40),ps=ins(SH,2,TR,40);
+  // solapas: izquierda en pasos 2-3, derecha en paso 4, frente en paso 6
+  const fl1=a=>a,hl=(on)=>on;
+  for(const pv of C1.userData.flaps){const k=pv.userData.face;let a=0,on=false;
+    if(k===0){const isA=pv.userData.axis==='top'||pv.userData.axis==='bot';const p=isA?ps:pp;a=bump((p-0.45)/0.55);on=t>(isA?2:1)&&t<(isA?3:2);}
+    else{const p=cl(t-5);a=bump((p-0.45)/0.55);on=t>5&&t<6;}
+    setFlap(pv,a);pv.children[0].material=on?FLAPM:FACE;}
+  for(const pv of C2.userData.flaps){const k=pv.userData.face;let a=0,on=false;
+    if(k===0){a=bump(c2/1.0);on=t>3&&t<4;}else{const p=cl(t-5);a=bump((p-0.45)/0.55);on=t>5&&t<6;}
+    setFlap(pv,a);pv.children[0].material=on?FLAPM:FACE;}
+  SBR.forEach(g=>{const p=cl((t-1.55)/0.45);g.visible=t>1.55;off(g,0,TR*(1-ease(cl((p-0.7)/0.3))),-10*(1-ease(cl(p/0.6))));});
+  UPL.forEach(g=>{const u=g.userData,t0=u.top?0.8:0.6,p=cl((t-t0)/0.2);g.visible=t>t0;
+    off(g,u.s>0?C2.position.x:0,(u.s>0?C2.position.y:0)+(u.top?1:-1)*(P.UL+4)*(1-ease(p)),0);});
+  HDR.visible=t>4;off(HDR,0,30*(1-ease(cl(t-4))),0);
+  LEGS.forEach(g=>{const p=cl(t-5);g.visible=t>5;off(g,0,TR*(1-ease(cl((p-0.7)/0.3))),14*(1-ease(cl(p/0.6))));});
+  for(const[g,d] of[[APF,0],[APR,0.15]]){g.visible=t>6;off(g,14*(1-ease(cl((t-6-d)/0.8))),0,0);g.position.set(0,14*(1-ease(cl((t-6-d)/0.8))),0);}
+  {const p=cl(t-7);RIB.visible=t>5.3;const r=cl((t-5.3)/0.7);off(RIB,0,TR*(1-ease(cl((r-0.7)/0.3))),12*(1-ease(cl(r/0.6))));
+   TOP.visible=t>7;const pt=cl(p/0.6);off(TOP,0,T+16*(1-ease(cl(pt/0.5)))-T*ease(cl((pt-0.8)/0.2)),P.TTL*(1-ease(cl((pt-0.5)/0.3))));
+   for(const g of[OVT,OVS]){g.visible=t>7.6;off(g,0,10*(1-ease(cl((p-0.6)/0.4))),0);}}
+  if(EXP&&t>=TEND){HDR.position.y+=22;C1.position.x-=14;C2.position.x+=14;UPL.forEach(g=>{g.position.x+=g.userData.s*26;g.position.y+=g.userData.top?8:0;});SH.position.y+=8;PAN.position.z-=6;SBR.forEach(g=>g.position.z-=14);
+    LEGS.forEach(g=>g.position.z+=26);RIB.position.z+=26;RIB.position.y-=6;APF.position.z+=30;APR.position.z+=24;APF.position.y+=4;APR.position.y+=4;TOP.position.z+=26;TOP.position.y+=14;OVT.position.z+=26;OVT.position.y+=22;OVS.position.y+=14;}
+  cot.visible=COT&&t>=TEND&&!EXP;
+  document.getElementById('caption').innerHTML=EXP&&t>=TEND?"<b>Vista explosionada</b> · C01, C02, 4 x U01 U de 20 in, P01, P02, P03, B01, B02/B09 patas, B03 faldón frontal, B04, B05 pata central, B06 y B07 tapas con dobladillo, 4 x B08 ménsulas":STEPS[Math.min(8,Math.floor(t+1e-6))];}
+const VIEWS={persp:[150,105,215],front:[0,42,265],side:[265,42,10],back:[-20,46,-265],top:[0,300,0.01],paso:[150,95,190],flap:[2,26,-34],fold:[60,260,140],leg:[120,30,90],canto:[62,40,58],boca:[-52,100,4],tubo:[70,34,62],luz:[8,92,62],col:[48,45,40]};
+function view(v){const p=VIEWS[v]||VIEWS.persp;const s=EXP?1.3:1;cam.position.set(p[0]*s,p[1]*s,p[2]*s);
+  const tg={top:[0,0,6],flap:[-31,17,3],fold:[0,30,0],leg:[34,12,12],canto:[36,28,20],boca:[-37,80,0],tubo:[36,29,19],luz:[0,30,6],col:[35,45,4]}[v]||[0,H*0.48,4];ctl.target.set(...tg);ctl.update();
+  document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));}
+function size(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+addEventListener('resize',size);size();
+const tEl=document.getElementById('t');let playing=false,last=0;
+tEl.oninput=()=>{playing=false;setT(+tEl.value);};
+document.getElementById('play').onclick=()=>{playing=!playing;if(playing&&+tEl.value>=TEND)tEl.value=0;document.getElementById('play').textContent=playing?'Pausa ❚❚':'Armar ▶';};
+document.getElementById('exp').onclick=e=>{EXP=!EXP;e.target.classList.toggle('on',EXP);tEl.value=TEND;setT(TEND);view('persp');};
+document.getElementById('cot').onclick=e=>{COT=!COT;e.target.classList.toggle('on',COT);setT(+tEl.value);};
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>view(b.dataset.v));
+const t0=q.get('step')!=null?+q.get('step'):TEND;tEl.value=t0;setT(t0);view(q.get('view')||'persp');
+function loop(ts){const dt=Math.min(0.05,(ts-last)/1000);last=ts;
+  if(playing){let t=+tEl.value+dt*0.4;if(t>=TEND){t=TEND;playing=false;document.getElementById('play').textContent='Armar ▶';}tEl.value=t;setT(t);}
+  ctl.update();renderer.render(scene,cam);window.__ready=true;requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+</script>
+<script>(function(){if(new URLSearchParams(location.search).get('auto')==='0')return;addEventListener('load',function(){setTimeout(function(){var b=document.getElementById('play')||document.getElementById('bPlay')||document.getElementById('aPlay');if(b)b.click();},1200);});})();</script>
+</body>
+</html>
