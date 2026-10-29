@@ -16,7 +16,8 @@ header h1{font-size:16px;margin:0}
 header .dim{color:var(--muted)}
 #stage{flex:1;position:relative;min-height:320px}
 #stage canvas{display:block;width:100%;height:100%}
-#caption{position:absolute;left:16px;right:16px;bottom:12px;background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+#caption{height:4.9em;overflow-y:auto;background:var(--panel);border-top:1px solid var(--line);padding:6px 16px;font-size:13px;line-height:1.35}
+@media (max-width:560px){#caption{font-size:12px;height:5.6em;padding:6px 12px}}
 #caption b{color:var(--accent)}
 .bar{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line);align-items:center}
 button{font:inherit;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
@@ -33,7 +34,8 @@ body.shot header,body.shot .bar,body.shot #caption{display:none}
 <body>
 <div id="app">
 <header><h1>Isla 5 niveles 48x48</h1><span class="dim" id="dims"></span></header>
-<div id="stage"><div id="caption"></div></div>
+<div id="stage"></div>
+<div id="caption"></div>
 <div class="bar">
   <button data-v="persp" class="on">3/4</button><button data-v="front">Frente</button><button data-v="side">Lateral</button><button data-v="back">Atrás</button><button data-v="top">Arriba</button><button data-v="costilla">Costilla</button>
   <span class="sep"></span>
@@ -157,9 +159,11 @@ function setT(t){const X=EXP&&t>=TEND;
     tr.o.position.set(0,DROP*(1-d)+(X?tr.k*1.6:0),tr.z*(24*(1-m)+(X?12:0)));});
   {const a=LW0+(RB.LV-1)*LWD;const r=sg(t,a-0.05,a+0.22),d=sg(t,a+0.24,a+0.34);RIBS.forEach(p=>{p.o.visible=t>a-0.07;p.o.position.set(0,-9*(1-r)+(RB.C+0.03)*(1-d)-(X?5:0),X?p.z*10:0);});}
   let i;if(X)i=-1;else if(t>=TEND)i=-2;else i=t<0.6?0:t<1.5?1:t<2.3?2:t<3.5?3:t<LW0?4:5+Math.min(4,Math.floor((t-LW0)/LWD));
-  document.getElementById('caption').innerHTML=i===-1?`<b>Vista explosionada</b> · P01 x2, P02 x1, P03 x1, P04 x2, P05 x4, P06 x20, P07 x4 (en verde agua)`:
+  const CAP=i===-1?`<b>Vista explosionada</b> · P01 x2, P02 x1, P03 x1, P04 x2, P05 x4, P06 x20, P07 x4 (en verde agua)`:
     i===-2?`<b>Armado</b> · ${NP} piezas por isla, sin pegamento. Costillas P07 (verde agua) de lado a lado bajo las charolas del nivel ${RB.LV}. Medidas del DXF original${D.VAR==='48x48'?' con el fondo ampliado a '+F.toFixed(2):''}.`:
-    i<5?STEPS[i]:LVTXT(i-5);}
+    i<5?STEPS[i]:LVTXT(i-5);
+  if(CAP!==LASTCAP){LASTCAP=CAP;const ce=document.getElementById('caption');ce.innerHTML=CAP;ce.scrollTop=0;}}
+var LASTCAP='';
 const TG=[0,27,0];const L5=LV[4];
 const VIEWS={persp:[-88,64,128],front:[0,30,152],side:[-152,30,0.01],back:[0,30,-152],top:[0,180,0.01],tres:[92,64,128],lejos:[-110,80,175],
   costilla:[-34,L5-12,F/2+34,-XQ,L5-1.5,F/2-RB.X],traba:[-XL-20,LV[0]+13,F/2+22,-XL+3,LV[0]-0.5,F/2-7],traba2:[-XL-26,LV[0]+6,F/2-4,-XL,LV[0]-0.5,F/2-12],armcost:[-70,L5+18,F/2+80,-XQ,L5-3,F/2-RB.X]};
@@ -207,8 +211,8 @@ document.getElementById('rec').onclick=()=>{
 
 const t0=q.get('step')!=null?+q.get('step'):TEND;tEl.value=t0;setT(t0);view(q.get('view')||'persp');
 function loop(ts){const dt=Math.min(0.05,(ts-last)/1000);last=ts;
-  if(playing){const D0=detail(+tEl.value);let t=+tEl.value+dt*0.55*SPD*(D0&&D0.slow?0.3:1);
-    const D1=detail(t);if(!D1){SAVP.copy(cam.position);SAVT.copy(ctl.target);}else{const p=VIEWS[D1.d.v];DP.set(p[0],p[1],p[2]);DT.set(p[3],p[4],p[5]);
+  if(playing){const D0=detail(+tEl.value);let t=+tEl.value+dt*0.55*SPD*(D0&&D0.slow?0.5:1);
+    const D1=detail(t);if(!D1){SAVP.copy(cam.position);SAVT.copy(ctl.target);}else{const p=VIEWS[D1.d.v],k=Math.max(1,1.25/cam.aspect);DT.set(p[3],p[4],p[5]);DP.set(p[0],p[1],p[2]).sub(DT).multiplyScalar(k).add(DT);
       cam.position.lerpVectors(SAVP,DP,D1.e);ctl.target.lerpVectors(SAVT,DT,D1.e);}if(t>=TEND){t=TEND;playing=false;document.getElementById('play').textContent='Armar ▶';if(ONREC)setTimeout(stopRec,1500);}tEl.value=t;setT(t);}
   ctl.update();renderer.render(scene,cam);if(pending===0&&LOGO_OK)window.__ready=true;if(q.get("shot")&&window.__ready&&++NF>3)return;requestAnimationFrame(loop);}
 let NF=0;
