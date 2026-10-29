@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cubre vitrina GUCCI 3D</title>
 <style>
-:root{--bg:#eef0f2;--panel:#ffffff;--ink:#1d2329;--muted:#5d6670;--line:#d5d9de;--accent:#23392f;--accent2:#1c2a4a}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--accent:#b5ce6e;--accent2:#5b7bc4;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15181b;--panel:#1f2327;--ink:#eef0f2;--muted:#a3abb4;--line:#343a40;--accent:#b5ce6e;--accent2:#5b7bc4;color-scheme:dark}
+:root{color-scheme:light;--bg:#ffffff;--panel:#ffffff;--ink:#1d2329;--muted:#5d6670;--line:#d5d9de;--accent:#23392f;--accent2:#1c2a4a}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
 #app{display:flex;flex-direction:column;height:100%}
@@ -40,7 +38,7 @@ body.shot header,body.shot .bar,body.shot #caption{display:none}
   <span class="sep"></span>
   <button id="play">Armar ▶</button><button id="spd">1x</button><input id="t" type="range" min="0" max="16" step="0.001" value="16">
   <button id="xr">Sin vitrina</button><button id="cot">Cotas</button>
-  <span id="ver">v 29-10 16:45</span>
+  <span id="ver">v 29-10 16:52</span>
 </div>
 </div>
 <script>
@@ -53,7 +51,7 @@ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:tru
 renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputEncoding=THREE.sRGBEncoding;stage.appendChild(renderer.domElement);
 const scene=new THREE.Scene();
-const dark=matchMedia('(prefers-color-scheme: dark)').matches&&!q.get('shot');
+const dark=false;   // fondo siempre blanco: el cubre azul marino se pierde sobre fondo oscuro
 const cam=new THREE.PerspectiveCamera(30,1,0.5,2000);
 const ctl=new THREE.OrbitControls(cam,renderer.domElement);ctl.enableDamping=true;
 scene.add(new THREE.HemisphereLight(0xffffff,0x8a8f96,0.8));
@@ -65,7 +63,7 @@ const grid=new THREE.GridHelper(200,50,dark?0x3a4046:0xc9ced4,dark?0x2a2f34:0xdd
 const LOGO=new Image();LOGO.src=DATA.logo;
 function brandBg(w,hh){const s=Math.min(2,1600/Math.max(w,hh));const W=Math.round(w*s),Hh=Math.round(hh*s);
   const c=document.createElement('canvas');c.width=W;c.height=Hh;const g=c.getContext('2d');const u=Math.min(W,Hh)/100;
-  const gr=g.createLinearGradient(0,0,0,Hh);gr.addColorStop(0,dark?'#20262c':'#f6f8fa');gr.addColorStop(1,dark?'#15191d':'#dfe5ea');g.fillStyle=gr;g.fillRect(0,0,W,Hh);
+  const gr=g.createLinearGradient(0,0,0,Hh);gr.addColorStop(0,'#ffffff');gr.addColorStop(1,'#f3f5f7');g.fillStyle=gr;g.fillRect(0,0,W,Hh);
   const m=3*u,lw=Math.min(W*0.42,34*u),lh=lw*LOGO.height/(LOGO.width||1);
   if(LOGO.complete&&LOGO.width){g.fillStyle='#ffffff';g.globalAlpha=0.92;g.fillRect(m-u,m-u,lw+2*u,lh+2*u);g.globalAlpha=1;g.drawImage(LOGO,m,m,lw,lh);}
   g.fillStyle=dark?'#a3b4c4':'#4a5d70';g.font=`600 ${2*u}px Arial,sans-serif`;g.textAlign='right';g.fillText('Cubre de vitrina GUCCI · corrugado EB 5 mm',W-m,Hh-m);
@@ -81,8 +79,8 @@ function gucciTex(){const c=document.createElement('canvas');c.width=512;c.heigh
   const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
 const OUTF=new THREE.MeshStandardMaterial({map:gucciTex(),roughness:0.7});
 const OUTN=new THREE.MeshStandardMaterial({color:NAVY,roughness:0.7});
-const INN=new THREE.MeshStandardMaterial({color:0xc9a26e,roughness:0.9});
-const EDG=new THREE.MeshStandardMaterial({color:0xb08a58,roughness:0.95});
+const INN=new THREE.MeshStandardMaterial({color:0xf6f6f2,roughness:0.9});
+const EDG=new THREE.MeshStandardMaterial({color:0xe4e1d8,roughness:0.95});
 const FLAPM=new THREE.MeshStandardMaterial({color:0xbfd8ef,roughness:0.85});   // aletas en color suave para distinguirlas
 const TAPEM=new THREE.MeshStandardMaterial({color:0xd84a4a,roughness:0.6});
 const LINM=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.5,transparent:true});
