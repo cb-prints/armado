@@ -152,8 +152,8 @@ const STEPS=[
  "<b>Piezas.</b> Cuerpo ya pegado de fábrica (pegado lineal: fondo + 2 laterales), 4 charolas, faldón y copete.",
  "<b>1.</b> Abrir el cuerpo: doblar los dos laterales (16 in) 90° hacia adelante; el fondo (24 in) queda atrás.",
  "<b>2.</b> Doblar 180° hacia adentro la tira frontal de 4 in de cada lateral, por el doble hendido.",
- "<b>3.</b> Armar las 4 charolas: subir las alas y el labio de 3.5 in; la solapa del labio se dobla solo 90° (queda abierta).",
- "<b>4.</b> Charola 1 (abajo): abrir hacia afuera las 2 solapas del fondo, pasar las 2 lengüetas traseras de la charola y cerrar las solapas (entran en la ranura de cada lengüeta). Doblar hacia adentro las 2 trabas del cuerpo por detrás del frente del labio y recién ahí doblar la solapa del labio a 180°: las trabas quedan escondidas y atrapadas dentro del doblez, y sus 3 pestañas entran en las ranuras del piso. La charola queda con caída hacia atrás.",
+ "<b>3.</b> Armar las 4 charolas: subir las 2 alas. El frontal queda abierto, plano, hasta que la charola esté dentro del cuerpo.",
+ "<b>4.</b> Charola 1 (abajo): abrir hacia afuera las 2 solapas del fondo, pasar las 2 lengüetas traseras de la charola y cerrar las solapas (entran en la ranura de cada lengüeta). Con el frontal de la charola todavía abierto, doblar hacia adentro las 2 trabas del cuerpo. Después subir el frontal a 90°, doblar la ceja a 90° y bajar la solapa del labio (180° en total): las trabas quedan escondidas y atrapadas dentro del doblez, y sus 3 pestañas entran en las ranuras del piso. La charola queda con caída hacia atrás.",
  "<b>5.</b> Charola 2: igual.","<b>6.</b> Charola 3: igual.","<b>7.</b> Charola 4 (arriba): igual.",
  "<b>8.</b> Faldón: doblar hacia atrás los 4 ganchos y la ceja superior; meter los ganchos en las ventanas del doblez frontal y bajarlo 0.7 in para trabar.",
  "<b>9.</b> Copete: bajarlo pegado al fondo y encastrar sus 2 ranuras en las 2 ranuras del borde superior del fondo.",
@@ -169,16 +169,17 @@ function setT(t0){const t=t0+1;   // t interno 1..11 (el cuerpo ya viene pegado)
   const s3a=sg(t,2.1,2.55),s3b=sg(t,2.5,3);spL.rotation.x=-D90*s3a;stL.rotation.x=-D90*s3b;spR.rotation.x=D90*s3a;stR.rotation.x=D90*s3b;
   cSpL.visible=cSpR.visible=t>2.1&&t<3;
   // 4: charolas se arman delante, cada una a su altura
-  const s4a=sg(t,3.1,3.5),s4b=sg(t,3.4,3.8),s4c=sg(t,3.7,4);
-  TRAYS.forEach((tr,k)=>{tr.wl.rotation.y=-D90*s4a;tr.wr.rotation.y=D90*s4a;tr.lf.rotation.x=-D90*s4b;tr.ls.rotation.x=-D90*s4c;
+  const s4a=sg(t,3.1,3.5);
+  TRAYS.forEach((tr,k)=>{tr.wl.rotation.y=-D90*s4a;tr.wr.rotation.y=D90*s4a;
     tr.w.visible=t>3.02;
-    const a=4+k,s=t-a;const mv=ease((s-0.22)/0.38),pk=1-ease(s/0.22);
+    const a=4+k,s=t-a;const mv=ease((s-0.14)/0.28),pk=1-ease(s/0.14);
     trayPlace(tr,LEV[k]*(1-pk)+(4+k*4.5)*pk,26*(1-mv));tr.tl.position.x+=46*pk;});
   // 5-8: solapas, charola, ganchos
-  LEV.forEach((y,k)=>{const a=4+k;const op=sg(t,a,a+0.2)-sg(t,a+0.62,a+0.8);
+  LEV.forEach((y,k)=>{const a=4+k;const op=sg(t,a,a+0.12)-sg(t,a+0.42,a+0.52);
     FL.filter(f=>Math.abs(45.8205-(f.x0+2.994)-y)<0.1).forEach(f=>f.p.rotation.y=-1.75*op);
-    const hk=sg(t,a+0.8,a+0.9);HKL[k].p.rotation.x=D90*hk;HKR[k].p.rotation.x=-D90*hk;
-    TRAYS[k].lr.rotation.x=-D90*sg(t,a+0.9,a+1);});   // la solapa del labio abraza las trabas
+    const hk=sg(t,a+0.54,a+0.66);HKL[k].p.rotation.x=D90*hk;HKR[k].p.rotation.x=-D90*hk;
+    const tr=TRAYS[k];tr.lf.rotation.x=-D90*sg(t,a+0.68,a+0.8);tr.ls.rotation.x=-D90*sg(t,a+0.8,a+0.9);
+    tr.lr.rotation.x=-D90*sg(t,a+0.9,a+1);});   // frontal abierto mientras entran las trabas; despues frontal, ceja y solapa las encierran
   // 9: faldon
   const f1=sg(t,8.05,8.3),f2=sg(t,8.3,8.75),f3=sg(t,8.75,9);fal.visible=t>8;
   FH.forEach(h=>h.p.rotation.y=(h.left?-D90:D90)*f1);fTop.rotation.x=-Math.PI*f1;
@@ -188,7 +189,7 @@ function setT(t0){const t=t0+1;   // t interno 1..11 (el cuerpo ya viene pegado)
   const si=t0<=0.001?0:t0>=9?10:Math.min(9,Math.floor(t0)+1);
   if(si!==SI){SI=si;document.getElementById('caption').innerHTML=STEPS[si];
   document.querySelectorAll('#steps button').forEach((b,i)=>b.classList.toggle('on',i===si));}
-  if(AUTO)autoCam(t);}
+}
 const TG=[0,30,8];
 const VIEWS={persp:[95,72,160],front:[0,36,175],side:[175,36,8],back:[0,40,-170],top:[0,190,8.01],hook:[38,52,62,-9,41.5,14],
   plano:[30,48,190,0,26,0],traseraT:[-60,64,-105,0,30,0]};
@@ -200,15 +201,20 @@ function view(v){AUTO=false;const p=VIEWS[v]||VIEWS.persp;camSet(p,p.length>3?p.
 function key(t){
   if(t<3.05)return [[95,72,160],[0,28,6]];
   if(t<4)return [[125,72,175],[22,18,14]];
+  // charolas: una sola vuelta atras (solapas de la charola 1); el resto de frente, subiendo con cada charola
   if(t<8){const k=Math.floor(t-4),s=t-4-k,y=LEV[k];
-    if(s<0.22||(s>0.6&&s<0.8))return [[-78,y+30,-118],[0,y+3,0]];
-    if(s>=0.8)return [[40,y+20,66],[-6,y+2,13]];
-    return [[85,y+42,120],[0,y+2,12]];}
+    if(k===0&&s>0.02&&s<0.55)return [[-78,y+30,-118],[0,y+3,0]];
+    if(s>=0.5)return [[34,y+16,58],[-6,y+3,13]];
+    return [[90,y+40,125],[0,y+2,10]];}
   if(t<9)return [[70,30,95],[0,6,14]];
   return [[95,80,165],[0,34,6]];}
-const CP=new THREE.Vector3(),CT=new THREE.Vector3();let camInit=false;
-function autoCam(t){const [p,tg]=key(t+1);if(!camInit){CP.set(...p);CT.set(...tg);camInit=true;}
-  CP.lerp(new THREE.Vector3(...p),0.045);CT.lerp(new THREE.Vector3(...tg),0.045);cam.position.copy(CP);ctl.target.copy(CT);}
+// camara automatica: se mueve en esfericas alrededor del objetivo, asi rodea el display en vez de atravesarlo
+const CT=new THREE.Vector3(),SC=new THREE.Spherical(),SD=new THREE.Spherical(),VA=new THREE.Vector3();let camInit=false,DT=1/60;
+function autoCam(t,snap){const [p,tg]=key(t+1);VA.set(p[0]-tg[0],p[1]-tg[1],p[2]-tg[2]);SD.setFromVector3(VA);
+  if(!camInit){if(snap){CT.set(...tg);SC.copy(SD);}else{CT.copy(ctl.target);SC.setFromVector3(VA.copy(cam.position).sub(ctl.target));}camInit=true;}
+  const k=1-Math.exp(-DT*2.6);let dth=SD.theta-SC.theta;dth=Math.atan2(Math.sin(dth),Math.cos(dth));
+  SC.theta+=dth*k;SC.phi+=(SD.phi-SC.phi)*k;SC.radius+=(SD.radius-SC.radius)*k;CT.x+=(tg[0]-CT.x)*k;CT.y+=(tg[1]-CT.y)*k;CT.z+=(tg[2]-CT.z)*k;
+  cam.position.setFromSpherical(SC).add(CT);ctl.target.copy(CT);}
 function size(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();brandBg(w,h);}
 let RZ=0;addEventListener('resize',()=>{clearTimeout(RZ);RZ=setTimeout(size,120);});size();   // en el celular la barra del navegador dispara muchos resize
 const tEl=document.getElementById('t');let playing=false,last=0,SPD=0.42;
@@ -260,17 +266,17 @@ document.getElementById('rec').onclick=()=>{
 const t0=q.get('step')!=null?+q.get('step'):TEND;tEl.value=t0;var TC=t0;
 if(q.get('view'))view(q.get('view'));else view('persp');
 if(q.get('cam')){const c=q.get('cam').split(',').map(Number);camSet(c.slice(0,3),c.slice(3));}
-if(q.get('acam')){AUTO=true;}
+if(q.get('acam')){AUTO=true;autoCam(t0,true);}
 setT(t0);
 // el tiempo se lleva en TC (no en el deslizador: su paso redondea y a 60-120 Hz el avance por cuadro se perdía)
-function loop(ts){const dt=last?Math.min(0.25,Math.max(0,(ts-last)/1000)):0;last=ts;
+function loop(ts){const dt=last?Math.min(0.25,Math.max(0,(ts-last)/1000)):0;last=ts;DT=dt||1/60;
   if(playing){let t=TC+dt*SPD;if(t>=TEND){t=TEND;playing=false;setPlayTxt();if(ONREC)setTimeout(stopRec,1800);}TC=t;tEl.value=t;try{setT(t);}catch(e){console.error(e);}}
-  else if(AUTO)autoCam(TC);
+  if(AUTO)autoCam(TC);   // una sola llamada por cuadro: antes setT tambien la llamaba con otro tiempo y la camara se iba a un punto intermedio
   ctl.update();renderer.render(scene,cam);if(ONREC)compose();window.__ready=true;requestAnimationFrame(loop);}
 requestAnimationFrame(loop);
 </script>
 <script>(function(){
-var q=new URLSearchParams(location.search),L=q.get('lang')||(/^es/i.test(navigator.language||'')?'es':'en'),D={"Floor display Port Diamond": "Port Diamond floor display", "{n} x {n} in · cuerpo {n} in de alto + copete · corrugado EB · {n} charolas · {n} hojas {n} x {n} in": "{n} x {n} in · body {n} in tall + header · EB corrugated · {n} trays · {n} sheets {n} x {n} in", "Frente": "Front", "Lateral": "Side", "Atrás": "Back", "Arriba": "Top", "Gancho": "Hook", "Armar ▶": "Assemble ▶", "Pausa ❚❚": "Pause ❚❚", "{n}x": "{n}x", "{n},{n}x": "{n}.{n}x", "Tomar imagen": "Save image", "● Grabar video": "● Record video", "■ Detener": "■ Stop", "Guardar la vista actual como PNG": "Save the current view as PNG", "Graba la animación de armado completa desde la vista actual": "Records the full assembly animation from the current view", "Grabando el armado…": "Recording the assembly…", "Piezas": "Parts", "Fin": "End", "Este navegador no puede grabar video": "This browser cannot record video", "Piezas.": "Parts.", "Cuerpo (fondo + lateral izquierdo), lateral derecho, {n} charolas, faldón y copete.": "Body (back + left side), right side, {n} trays, kick panel and header.", "{n}.": "{n}.", "Pegar el lateral derecho sobre la pestaña PEGAR del cuerpo ({n} in).": "Glue the right side onto the GLUE flap of the body ({n} in).", "Doblar los dos laterales ({n} in) {n}° hacia adelante; el fondo ({n} in) queda atrás.": "Fold both sides ({n} in) {n}° forward; the back ({n} in) stays behind.", "Doblar {n}° hacia adentro la tira frontal de {n} in de cada lateral, por el doble hendido.": "Fold {n}° inward the {n} in front strip of each side, along the double score.", "Armar las {n} charolas: subir las alas, subir el labio de {n} in y doblarlo {n}° hacia adentro; sus {n} pestañas entran en las ranuras del piso.": "Build the {n} trays: raise the side wings, raise the {n} in lip and fold it {n}° inward; its {n} tabs go into the floor slots.", "Charola {n} (abajo): abrir hacia afuera las {n} solapas del fondo, pasar las {n} lengüetas traseras de la charola, cerrar las solapas (entran en la ranura de cada lengüeta) y doblar hacia adentro los {n} ganchos frontales, que entran en el labio.": "Tray {n} (bottom): open the {n} back flaps outward, pass the tray's {n} rear tabs through, close the flaps (they drop into the slot of each tab) and fold the {n} front hooks inward so they go into the lip.", "Charola {n}: igual.": "Tray {n}: same.", "Charola {n} (arriba): igual.": "Tray {n} (top): same.", "Faldón: doblar hacia atrás los {n} ganchos y la ceja superior; meter los ganchos en las ventanas del doblez frontal y bajarlo {n} in para trabar.": "Kick panel: fold the {n} hooks and the top flange back; insert the hooks into the windows of the front fold and lower it {n} in to lock.", "Copete: bajarlo pegado al fondo y encastrar sus {n} ranuras en las {n} ranuras del borde superior del fondo.": "Header: lower it against the back and interlock its {n} slots with the {n} slots on the top edge of the back.", "Armado completo.": "Assembly complete.", "{n} piezas de {n} hojas {n} x {n} in; solo la pestaña PEGAR lleva pegamento.": "{n} pieces from {n} sheets {n} x {n} in; only the GLUE flap takes glue.", "Descarga cancelada": "Download cancelled", "No se pudo guardar": "Could not save", "No se pudo capturar": "Could not capture", "Cuerpo ya pegado de fábrica (pegado lineal: fondo + {n} laterales), {n} charolas, faldón y copete.": "Body already glued at the factory (line glue: back + {n} sides), {n} trays, kick panel and header.", "Abrir el cuerpo: doblar los dos laterales ({n} in) {n}° hacia adelante; el fondo ({n} in) queda atrás.": "Open the body: fold both sides ({n} in) {n}° forward; the back ({n} in) stays behind.", "Armar las {n} charolas: subir las alas y el labio de {n} in; la solapa del labio se dobla solo {n}° (queda abierta).": "Build the {n} trays: raise the side wings and the {n} in lip; the lip flap is folded only {n}° (it stays open).", "Charola {n} (abajo): abrir hacia afuera las {n} solapas del fondo, pasar las {n} lengüetas traseras de la charola y cerrar las solapas (entran en la ranura de cada lengüeta). Doblar hacia adentro las {n} trabas del cuerpo por detrás del frente del labio y recién ahí doblar la solapa del labio a {n}°: las trabas quedan escondidas y atrapadas dentro del doblez, y sus {n} pestañas entran en las ranuras del piso. La charola queda con caída hacia atrás.": "Tray {n} (bottom): open the {n} back flaps outward, pass the tray's {n} rear tabs through and close the flaps (they drop into the slot of each tab). Fold the {n} body locks inward behind the front of the lip, and only then fold the lip flap to {n}°: the locks end up hidden and trapped inside the fold, and its {n} tabs go into the floor slots. The tray slopes down toward the back.", "{n} piezas, sin pegamento en el armado: el cuerpo llega pegado.": "{n} pieces, no glue during assembly: the body arrives glued."},SRC="es";
+var q=new URLSearchParams(location.search),L=q.get('lang')||(/^es/i.test(navigator.language||'')?'es':'en'),D={"Floor display Port Diamond": "Port Diamond floor display", "{n} x {n} in · cuerpo {n} in de alto + copete · corrugado EB · {n} charolas · {n} hojas {n} x {n} in": "{n} x {n} in · body {n} in tall + header · EB corrugated · {n} trays · {n} sheets {n} x {n} in", "Frente": "Front", "Lateral": "Side", "Atrás": "Back", "Arriba": "Top", "Gancho": "Hook", "Armar ▶": "Assemble ▶", "Pausa ❚❚": "Pause ❚❚", "{n}x": "{n}x", "{n},{n}x": "{n}.{n}x", "Tomar imagen": "Save image", "● Grabar video": "● Record video", "■ Detener": "■ Stop", "Guardar la vista actual como PNG": "Save the current view as PNG", "Graba la animación de armado completa desde la vista actual": "Records the full assembly animation from the current view", "Grabando el armado…": "Recording the assembly…", "Piezas": "Parts", "Fin": "End", "Este navegador no puede grabar video": "This browser cannot record video", "Piezas.": "Parts.", "Cuerpo (fondo + lateral izquierdo), lateral derecho, {n} charolas, faldón y copete.": "Body (back + left side), right side, {n} trays, kick panel and header.", "{n}.": "{n}.", "Pegar el lateral derecho sobre la pestaña PEGAR del cuerpo ({n} in).": "Glue the right side onto the GLUE flap of the body ({n} in).", "Doblar los dos laterales ({n} in) {n}° hacia adelante; el fondo ({n} in) queda atrás.": "Fold both sides ({n} in) {n}° forward; the back ({n} in) stays behind.", "Doblar {n}° hacia adentro la tira frontal de {n} in de cada lateral, por el doble hendido.": "Fold {n}° inward the {n} in front strip of each side, along the double score.", "Armar las {n} charolas: subir las alas, subir el labio de {n} in y doblarlo {n}° hacia adentro; sus {n} pestañas entran en las ranuras del piso.": "Build the {n} trays: raise the side wings, raise the {n} in lip and fold it {n}° inward; its {n} tabs go into the floor slots.", "Charola {n} (abajo): abrir hacia afuera las {n} solapas del fondo, pasar las {n} lengüetas traseras de la charola, cerrar las solapas (entran en la ranura de cada lengüeta) y doblar hacia adentro los {n} ganchos frontales, que entran en el labio.": "Tray {n} (bottom): open the {n} back flaps outward, pass the tray's {n} rear tabs through, close the flaps (they drop into the slot of each tab) and fold the {n} front hooks inward so they go into the lip.", "Charola {n}: igual.": "Tray {n}: same.", "Charola {n} (arriba): igual.": "Tray {n} (top): same.", "Faldón: doblar hacia atrás los {n} ganchos y la ceja superior; meter los ganchos en las ventanas del doblez frontal y bajarlo {n} in para trabar.": "Kick panel: fold the {n} hooks and the top flange back; insert the hooks into the windows of the front fold and lower it {n} in to lock.", "Copete: bajarlo pegado al fondo y encastrar sus {n} ranuras en las {n} ranuras del borde superior del fondo.": "Header: lower it against the back and interlock its {n} slots with the {n} slots on the top edge of the back.", "Armado completo.": "Assembly complete.", "{n} piezas de {n} hojas {n} x {n} in; solo la pestaña PEGAR lleva pegamento.": "{n} pieces from {n} sheets {n} x {n} in; only the GLUE flap takes glue.", "Descarga cancelada": "Download cancelled", "No se pudo guardar": "Could not save", "No se pudo capturar": "Could not capture", "Cuerpo ya pegado de fábrica (pegado lineal: fondo + {n} laterales), {n} charolas, faldón y copete.": "Body already glued at the factory (line glue: back + {n} sides), {n} trays, kick panel and header.", "Abrir el cuerpo: doblar los dos laterales ({n} in) {n}° hacia adelante; el fondo ({n} in) queda atrás.": "Open the body: fold both sides ({n} in) {n}° forward; the back ({n} in) stays behind.", "Armar las {n} charolas: subir las {n} alas. El frontal queda abierto, plano, hasta que la charola esté dentro del cuerpo.": "Build the {n} trays: raise the {n} side wings. The front stays open, flat, until the tray is inside the body.", "Charola {n} (abajo): abrir hacia afuera las {n} solapas del fondo, pasar las {n} lengüetas traseras de la charola y cerrar las solapas (entran en la ranura de cada lengüeta). Con el frontal de la charola todavía abierto, doblar hacia adentro las {n} trabas del cuerpo. Después subir el frontal a {n}°, doblar la ceja a {n}° y bajar la solapa del labio ({n}° en total): las trabas quedan escondidas y atrapadas dentro del doblez, y sus {n} pestañas entran en las ranuras del piso. La charola queda con caída hacia atrás.": "Tray {n} (bottom): open the {n} back flaps outward, pass the tray's {n} rear tabs through and close the flaps (they drop into the slot of each tab). With the tray front still open, fold the {n} body locks inward. Then raise the front to {n}°, fold the top crease {n}° and bring the lip flap down ({n}° in total): the locks end up hidden and trapped inside the fold, and its {n} tabs go into the floor slots. The tray slopes down toward the back.", "{n} piezas, sin pegamento en el armado: el cuerpo llega pegado.": "{n} pieces, no glue during assembly: the body arrives glued."},SRC="es";
 var T=(L!==SRC&&D)?D:null,NUM=/\d+(?:[.,]\d+)?/g;
 function tr(t){var k=t.replace(/\s+/g,' ').trim();if(!k)return null;var nums=k.match(NUM)||[];var v=T[k.replace(NUM,'{n}')];if(v==null)return null;var i=0;
  v=v.replace(/\{n\}/g,function(){return nums[i++]||''});var lead=t.match(/^\s*/)[0],tail=t.match(/\s*$/)[0];return lead+v+tail;}
