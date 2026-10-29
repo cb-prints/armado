@@ -211,11 +211,12 @@ document.getElementById('rec').onclick=()=>{
 
 const t0=q.get('step')!=null?+q.get('step'):TEND;tEl.value=t0;setT(t0);view(q.get('view')||'persp');
 function loop(ts){const dt=Math.min(0.05,(ts-last)/1000);last=ts;
-  if(playing){const D0=detail(+tEl.value);let t=+tEl.value+dt*0.55*SPD*(D0&&D0.slow?0.5:1);
+  // el tiempo se lleva en TC (no en el slider: su step de 0.01 redondea y a 60-120 Hz el avance por cuadro se perdia y la animacion se frenaba)
+  if(playing){if(Math.abs(+tEl.value-TC)>0.011)TC=+tEl.value;const D0=detail(TC);let t=TC+dt*0.55*SPD*(D0&&D0.slow?0.6:1);
     const D1=detail(t);if(!D1){SAVP.copy(cam.position);SAVT.copy(ctl.target);}else{const p=VIEWS[D1.d.v],k=Math.max(1,1.25/cam.aspect);DT.set(p[3],p[4],p[5]);DP.set(p[0],p[1],p[2]).sub(DT).multiplyScalar(k).add(DT);
-      cam.position.lerpVectors(SAVP,DP,D1.e);ctl.target.lerpVectors(SAVT,DT,D1.e);}if(t>=TEND){t=TEND;playing=false;document.getElementById('play').textContent='Armar ▶';if(ONREC)setTimeout(stopRec,1500);}tEl.value=t;setT(t);}
+      cam.position.lerpVectors(SAVP,DP,D1.e);ctl.target.lerpVectors(SAVT,DT,D1.e);}if(t>=TEND){t=TEND;playing=false;document.getElementById('play').textContent='Armar ▶';if(ONREC)setTimeout(stopRec,1500);}TC=t;tEl.value=t;try{setT(t);}catch(e){console.error(e);}}
   ctl.update();renderer.render(scene,cam);if(pending===0&&LOGO_OK)window.__ready=true;if(q.get("shot")&&window.__ready&&++NF>3)return;requestAnimationFrame(loop);}
-let NF=0;
+let NF=0;var TC=+tEl.value;
 requestAnimationFrame(loop);
 </script>
 <script>(function(){
