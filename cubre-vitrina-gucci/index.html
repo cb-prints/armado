@@ -21,7 +21,7 @@ return /^es/i.test(navigator.language||'')?'es':'en'})();
 function setLang(l){LANG=l;try{localStorage.setItem('cb_lang',l)}catch(e){}document.documentElement.lang=l;
 document.querySelectorAll('[data-es]').forEach(function(e){e.textContent=e.getAttribute('data-'+l)});
 document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.l===l)});
-var f=document.querySelector('iframe');if(f)f.src='visor.html?v=8ec43335&lang='+l;}
+var f=document.querySelector('iframe');if(f)f.src='visor.html?v=33594283&lang='+l;}
 document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){if(b.dataset.l!==LANG)setLang(b.dataset.l)}});setLang(LANG)});
 </script></head>
 <body><header><div class="top"><img class="logo" src="../logo.png" alt="CB PRINTS · Displays and boxes"><span class="mob"><div class="lang" role="group" aria-label="Idioma / Language"><button data-l="es">ES</button><button data-l="en">EN</button></div></span></div><div class="tit"><h1 data-es="Cubre de vitrina GUCCI 20x75x20" data-en="GUCCI showcase cover 20x75x20">Cubre de vitrina GUCCI 20x75x20</h1><p data-es="Instrucciones de armado paso a paso" data-en="Step-by-step assembly instructions">Instrucciones de armado paso a paso</p></div><span class="desk"><div class="lang" role="group" aria-label="Idioma / Language"><button data-l="es">ES</button><button data-l="en">EN</button></div></span></header>
