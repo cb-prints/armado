@@ -40,7 +40,7 @@ body.shot header,body.shot .bar,body.shot #caption{display:none}
   <span class="sep"></span>
   <button id="play">Armar ▶</button><button id="spd">1x</button><input id="t" type="range" min="0" max="16" step="0.001" value="16">
   <button id="xr">Sin vitrina</button><button id="cot">Cotas</button>
-  <span id="ver">v 29-10 16:01</span>
+  <span id="ver">v 29-10 16:45</span>
 </div>
 </div>
 <script>
@@ -87,7 +87,7 @@ const FLAPM=new THREE.MeshStandardMaterial({color:0xbfd8ef,roughness:0.85});   /
 const TAPEM=new THREE.MeshStandardMaterial({color:0xd84a4a,roughness:0.6});
 const LINM=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.5,transparent:true});
 [OUTN,INN,EDG,FLAPM,TAPEM,LINM].forEach(m=>m.color.convertSRGBToLinear());
-function panel(len,outer){const g=new THREE.BoxGeometry(len+T,H,T);const m=new THREE.Mesh(g,[EDG,EDG,EDG,EDG,outer,INN]);m.castShadow=m.receiveShadow=true;return m;}
+function panel(len,outer){const g=new THREE.BoxGeometry(len+T,H,T);const m=new THREE.Mesh(g,[OUTN,OUTN,EDG,EDG,outer,INN]);m.castShadow=m.receiveShadow=true;return m;}
 function flapGeo(){const s=new THREE.Shape([[0,P.GB],[P.GL,P.GB+P.GBV],[P.GL,H-P.GB-P.GBV],[0,H-P.GB]].map(p=>new THREE.Vector2(p[0],p[1])));
   const g=new THREE.ExtrudeGeometry(s,{depth:T,bevelEnabled:false});g.translate(0,0,-1.5*T);return g;}
 // cadena: F (raiz) - L - B, F - R - aleta A
